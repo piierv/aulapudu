@@ -543,7 +543,7 @@
                 <button title="Pulgar Arriba" onclick="sendReaction('thumbsup')">👍</button>
                 <button title="Pulgar Abajo" onclick="sendReaction('thumbsdown')">👎</button>
             </div>
-            <div class="spectator-input-card" style="margin-top: 30px%;">
+            <div class="spectator-input-card" style="margin-top: 30px;">
                 <h3>Contenido Interactivo</h3>
                 <p>Participa en encuestas, responde preguntas o sube archivos.</p>
                 <button onclick="answerQuestion()">Responder Pregunta</button>
@@ -689,7 +689,7 @@
 
             currentSessionCode = sess.session_code;
             await initRealtimeForSession(currentSessionCode);
-            document.getElementById('spectator-presentation-title').textContent = document.getElementById('current-presentation-title').textContent;
+            document.getElementById('spectator-presentation-title').textContent = document.getElementById('current-presentation-title').textContent || 'Presentación';
             document.getElementById('spectator-total-slides').textContent = totalSlides;
             document.getElementById('spectator-slide-number').textContent = currentSlide;
             showPage('spectator-interface');
@@ -1052,6 +1052,7 @@ async function uploadPresentation(){
     if (ext === 'pdf') {
       await openPdf(url);
       document.getElementById('current-presentation-title').textContent = file.name;
+      document.getElementById('spectator-presentation-title').textContent = file.name;   // <— también espectador
       document.getElementById('current-presentation-text').textContent = `Presentación activa: ${file.name}`;
       broadcastPresentation({ type: 'pdf', url, name: file.name, totalSlides });
       alert(`Presentación "${file.name}" subida y cargada (PDF).`);
@@ -1059,6 +1060,7 @@ async function uploadPresentation(){
       const viewUrl = officeViewerUrl(url);
       openPptx(viewUrl);
       document.getElementById('current-presentation-title').textContent = file.name;
+      document.getElementById('spectator-presentation-title').textContent = file.name;   // <— también espectador
       document.getElementById('current-presentation-text').textContent = `Presentación activa: ${file.name}`;
       broadcastPresentation({ type: 'pptx', url: viewUrl, name: file.name });
       alert(`Presentación "${file.name}" subida y cargada (PPT/PPTX). Nota: el visor de Office no expone eventos de navegación.`);
@@ -1081,7 +1083,6 @@ async function uploadPresentation(){
     showPresenterContent('live-session');
   } catch (e) {
     console.error(e);
-    // Mensaje ya mostrado en uploadToStorage si es bucket not found
   }
 }
 
@@ -1091,6 +1092,7 @@ async function loadPresentation(name, ext = null, url = null){
   currentSlide = 1;
 
   document.getElementById('current-presentation-title').textContent = currentPresentation;
+  document.getElementById('spectator-presentation-title').textContent = currentPresentation; // <— también espectador
   document.getElementById('current-presentation-text').textContent = `Presentación activa: ${currentPresentation}`;
   document.getElementById('current-slide').textContent = currentSlide;
 
@@ -1143,9 +1145,11 @@ initRealtimeForSession = async function(sessionCode){
           if (specTotal) specTotal.textContent = totalSlides;
         }
         document.getElementById('current-presentation-title').textContent = payload.name || 'Presentación PDF';
+        document.getElementById('spectator-presentation-title').textContent = payload.name || 'Presentación PDF'; // <—
       } else if (payload.type === 'pptx' && payload.url) {
         openPptx(payload.url);
         document.getElementById('current-presentation-title').textContent = payload.name || 'Presentación PPTX';
+        document.getElementById('spectator-presentation-title').textContent = payload.name || 'Presentación PPTX'; // <—
       }
     });
   }
