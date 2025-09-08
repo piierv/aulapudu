@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script>
+  // pdf.js worker (requerido)
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AulaPudú - Plataforma Interactiva de Presentaciones</title>
@@ -982,6 +987,255 @@
             const { data } = await supa.auth.getUser();
             if (data?.user) currentUser = data.user;
         });
+        
     </script>
+    <script>
+// ====== AÑADIDOS PARA PRESENTAR PDF/PPTX EN VIVO ======
+const STORAGE_BUCKET = 'presentations';
+let pdfDoc = null;
+let pdfUrl = null;
+
+// Utilidad: subir archivo a Storage y devolver URL pública
+async function uploadToStorage(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const ts = Date.now();
+  const path = `${currentSessionCode}/${ts}-${file.name}`;
+  const { error: upErr } = await supa.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
+  if (upErr) throw upErr;
+  const { data: pub } = supa.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  return { url: pub.publicUrl, ext };
+}
+
+// Utilidad: construir URL del visor de Office para PPTX
+function officeViewerUrl(publicUrl) {
+  const src = encodeURIComponent(publicUrl);
+  return `https://view.officeapps.live.com/op/embed.aspx?src=${src}`;
+}
+
+// Render de una página PDF en el contenedor actual (presentador y espectador)
+async function renderPdfPage(pageNumber) {
+  if (!pdfDoc) return;
+  const page = await pdfDoc.getPage(pageNumber);
+  const viewport = page.getViewport({ scale: 1.5 });
+
+  // Prepara el contenedor
+  const container = document.getElementById('current-slide-content');
+  container.innerHTML = ''; // no cambia estilos globales
+  const canvas = document.createElement('canvas');
+  canvas.id = 'pdf-canvas';
+  canvas.style.maxWidth = '100%';
+  canvas.style.height = 'auto';
+  container.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  await page.render({ canvasContext: ctx, viewport }).promise;
+
+  // También pinta en la vista del espectador si existe esa área
+  const specContainer = document.querySelector('#spectator-interface #current-slide-content');
+  if (specContainer) {
+    specContainer.innerHTML = '';
+    const sc = canvas.cloneNode(true);
+    specContainer.appendChild(sc);
+  }
+}
+
+// Abrir un PDF (descarga y prepara pdf.js)
+async function openPdf(url) {
+  pdfUrl = url;
+  const loadingTask = pdfjsLib.getDocument(pdfUrl);
+  pdfDoc = await loadingTask.promise;
+  totalSlides = pdfDoc.numPages;
+  document.getElementById('total-slides').textContent = totalSlides;
+  const specTotal = document.getElementById('spectator-total-slides');
+  if (specTotal) specTotal.textContent = totalSlides;
+  currentSlide = 1;
+  await renderPdfPage(currentSlide);
+}
+
+// Mostrar un PPTX dentro de un iframe (sincronía de navegación no disponible)
+function openPptx(viewUrl) {
+  const container = document.getElementById('current-slide-content');
+  container.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.id = 'pptx-frame';
+  iframe.src = viewUrl;
+  iframe.style.width = '100%';
+  iframe.style.height = '480px';
+  iframe.style.border = '0';
+  container.appendChild(iframe);
+
+  // En espectador
+  const specContainer = document.querySelector('#spectator-interface #current-slide-content');
+  if (specContainer) {
+    specContainer.innerHTML = '';
+    const iframe2 = document.createElement('iframe');
+    iframe2.src = viewUrl;
+    iframe2.style.width = '100%';
+    iframe2.style.height = '480px';
+    iframe2.style.border = '0';
+    specContainer.appendChild(iframe2);
+  }
+
+  // Para PPTX no hay "totalSlides" expuesto; dejamos contadores como estaban
+}
+
+// Broadcast del estado de presentación para que todos carguen el mismo archivo
+function broadcastPresentation(payload) {
+  rt.chan?.send({ type: 'broadcast', event: 'presentation', payload });
+}
+
+// ====== OVERRIDE SUAVE: Subir presentación (usa Storage) ======
+async function uploadPresentation(){
+  const input = document.getElementById('presentation-upload');
+  const file = input.files[0];
+  if (!file) return alert('Selecciona un archivo.');
+
+  try {
+    const { url, ext } = await uploadToStorage(file);
+
+    if (ext === 'pdf') {
+      // Carga PDF y sincroniza
+      await openPdf(url);
+      document.getElementById('current-presentation-title').textContent = file.name;
+      document.getElementById('current-presentation-text').textContent = `Presentación activa: ${file.name}`;
+      broadcastPresentation({ type: 'pdf', url, name: file.name, totalSlides });
+      alert(`Presentación "${file.name}" subida y cargada (PDF).`);
+    } else if (ext === 'pptx' || ext === 'ppt') {
+      const viewUrl = officeViewerUrl(url);
+      openPptx(viewUrl);
+      document.getElementById('current-presentation-title').textContent = file.name;
+      document.getElementById('current-presentation-text').textContent = `Presentación activa: ${file.name}`;
+      // En PPTX no podemos sincronizar botones; ambos verán el mismo archivo en tiempo real
+      broadcastPresentation({ type: 'pptx', url: viewUrl, name: file.name });
+      alert(`Presentación "${file.name}" subida y cargada (PPTX). Nota: la navegación del visor no se puede sincronizar programáticamente.`);
+    } else {
+      alert('Formato no soportado para visualizar en vivo. Usa PDF o PPTX.');
+    }
+
+    // Mantén tu lista visual existente
+    const ul = document.getElementById('presentations-list');
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${file.name}</span>
+      <div>
+        <button onclick="loadPresentation('${file.name.replace(/'/g,"\\'")}', '${ext}', '${url.replace(/'/g,"\\'")}')">Cargar</button>
+        <button class="red">Eliminar</button>
+      </div>`;
+    ul.appendChild(li);
+    input.value = '';
+
+    // Ir directo a sesión en vivo
+    showPresenterContent('live-session');
+  } catch (e) {
+    console.error(e);
+    alert('Error al subir la presentación: ' + (e?.message || e));
+  }
+}
+
+// ====== OVERRIDE SUAVE: Cargar una presentación ya subida ======
+// name: nombre lógico, ext: 'pdf'|'pptx'|'ppt', url: URL pública (para pdf o pptx)
+async function loadPresentation(name, ext = null, url = null){
+  currentPresentation = name || 'Presentación';
+  currentSlide = 1;
+
+  document.getElementById('current-presentation-title').textContent = currentPresentation;
+  document.getElementById('current-presentation-text').textContent = `Presentación activa: ${currentPresentation}`;
+  document.getElementById('current-slide').textContent = currentSlide;
+
+  if (ext && url) {
+    if (ext.toLowerCase() === 'pdf') {
+      await openPdf(url);
+      broadcastPresentation({ type: 'pdf', url, name: currentPresentation, totalSlides });
+    } else if (ext.toLowerCase() === 'pptx' || ext.toLowerCase() === 'ppt') {
+      const viewUrl = url.startsWith('http') ? officeViewerUrl(url) : url;
+      openPptx(viewUrl);
+      broadcastPresentation({ type: 'pptx', url: viewUrl, name: currentPresentation });
+    }
+  } else {
+    // Modo demo anterior: solo texto
+    totalSlides = 10;
+    document.getElementById('total-slides').textContent = totalSlides;
+    document.getElementById('spectator-presentation-title').textContent = currentPresentation;
+    document.getElementById('spectator-slide-number').textContent = currentSlide;
+    document.getElementById('spectator-total-slides').textContent = totalSlides;
+  }
+
+  showPresenterContent('live-session');
+}
+
+// ====== Sincronía de diapositivas para PDF (reutiliza tus botones) ======
+const _origUpdateSlide = updateSlide;
+updateSlide = async function (){
+  // Si hay PDF cargado, renderiza página real
+  if (pdfDoc && pdfUrl) {
+    await renderPdfPage(currentSlide);
+    document.getElementById('current-slide').textContent = currentSlide;
+    const specNum = document.getElementById('spectator-slide-number');
+    if (specNum) specNum.textContent = currentSlide;
+  } else {
+    // Fallback a tu contenido demo
+    _origUpdateSlide();
+  }
+};
+
+// Ya tienes broadcastSlide() que envía {currentSlide}; no lo tocamos.
+
+// ====== Escucha nuevos eventos de presentación en todos los clientes ======
+(function patchRealtimePresentationListener() {
+  if (!rt) return; // se rehará en initRealtimeForSession
+})();
+
+// Extendemos tu initRealtimeForSession para escuchar 'presentation'
+const _origInitRealtimeForSession = initRealtimeForSession;
+initRealtimeForSession = async function(sessionCode){
+  await _origInitRealtimeForSession(sessionCode);
+
+  // Añadimos el listener de 'presentation' UNA sola vez por canal
+  if (rt?.chan) {
+    rt.chan.on('broadcast', { event:'presentation' }, async (msg) => {
+      const payload = msg.payload || {};
+      // Carga la misma presentación en todos
+      if (payload.type === 'pdf' && payload.url) {
+        await openPdf(payload.url);
+        if (typeof payload.totalSlides === 'number') {
+          totalSlides = payload.totalSlides;
+          document.getElementById('total-slides').textContent = totalSlides;
+          const specTotal = document.getElementById('spectator-total-slides');
+          if (specTotal) specTotal.textContent = totalSlides;
+        }
+        document.getElementById('current-presentation-title').textContent = payload.name || 'Presentación PDF';
+      } else if (payload.type === 'pptx' && payload.url) {
+        openPptx(payload.url);
+        document.getElementById('current-presentation-title').textContent = payload.name || 'Presentación PPTX';
+      }
+    });
+  }
+};
+
+// Ajusta los botones next/prev para PDF (ya usan updateSlide + broadcast)
+const _origNext = nextSlide;
+nextSlide = function(){
+  if (pdfDoc && currentSlide < totalSlides) {
+    currentSlide++;
+    updateSlide();
+    broadcastSlide();
+  } else {
+    _origNext();
+  }
+};
+const _origPrev = prevSlide;
+prevSlide = function(){
+  if (pdfDoc && currentSlide > 1) {
+    currentSlide--;
+    updateSlide();
+    broadcastSlide();
+  } else {
+    _origPrev();
+  }
+};
+</script>
+
 </body>
 </html>
