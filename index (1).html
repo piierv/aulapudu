@@ -68,6 +68,12 @@
       border: 1px dashed #374151; object-fit: contain;
     }
     a { color: var(--accent); text-decoration: none; }
+    /* Mini área de presentación (no cambia diseño base, es una caja dentro de card) */
+    .stage {
+      border: 1px dashed #374151; border-radius: 12px; padding: 16px; background:#0a0f20;
+      display:flex; align-items:center; justify-content:center; height:180px; text-align:center;
+    }
+    .badges { display:flex; gap:8px; flex-wrap:wrap; }
   </style>
 </head>
 <body>
@@ -106,6 +112,9 @@
           <div class="muted">Código de sesión</div>
           <div id="sessionCode" class="mono" style="font-size:18px; margin:6px 0;">—</div>
           <img id="qr" class="qr" alt="QR" />
+          <div class="muted" style="margin-top:8px">
+            <span id="liveCount" class="pill" style="display:none"></span>
+          </div>
         </div>
       </section>
 
@@ -135,15 +144,27 @@
         <div id="attList" class="list"></div>
       </section>
 
-      <!-- NUEVA: CONTROLES EN VIVO (no cambia diseño; usa las mismas clases) -->
+      <!-- LIVE PRESENTATION (sin romper tu diseño) -->
       <section class="card">
-        <h2>5) Controles en vivo (opcional)</h2>
-        <p class="muted">Prueba broadcast de diapositivas y reacciones en tiempo real.</p>
-        <div class="actions" style="margin-bottom:8px">
-          <button onclick="prevSlide()">Anterior</button>
-          <button onclick="nextSlide()">Siguiente</button>
-          <span class="pill mono" id="slideInfo">Slide: 1/10</span>
+        <h2>5) Presentación en vivo</h2>
+        <div class="stage" id="stage">
+          <div>
+            <div class="muted">Diapositiva actual</div>
+            <div class="mono" style="font-size:22px">
+              <span id="curSlide">1</span>/<span id="totSlide">10</span>
+            </div>
+          </div>
         </div>
+        <div class="actions" style="margin-top:10px">
+          <button onclick="prevSlide()">⬅️ Anterior</button>
+          <button onclick="nextSlide()">Siguiente ➡️</button>
+        </div>
+        <div class="muted" style="margin-top:8px">Las diapositivas se sincronizan en tiempo real entre todos.</div>
+      </section>
+
+      <!-- LIVE REACTIONS (emojis + contadores) -->
+      <section class="card">
+        <h2>6) Reacciones</h2>
         <div class="actions">
           <button onclick="sendReaction('love')">❤️ Me encanta</button>
           <button onclick="sendReaction('clap')">👏 Aplauso</button>
@@ -151,7 +172,14 @@
           <button onclick="sendReaction('thumbsup')">👍</button>
           <button onclick="sendReaction('thumbsdown')">👎</button>
         </div>
-        <div id="rxLog" class="muted" style="margin-top:8px"></div>
+        <div class="badges" style="margin-top:10px">
+          <span class="pill">❤️ <span id="c_love">0</span></span>
+          <span class="pill">👏 <span id="c_clap">0</span></span>
+          <span class="pill">❓ <span id="c_question">0</span></span>
+          <span class="pill">👍 <span id="c_thumbsup">0</span></span>
+          <span class="pill">👎 <span id="c_thumbsdown">0</span></span>
+        </div>
+        <div class="muted" style="margin-top:8px">Se actualiza en vivo en todas las pantallas.</div>
       </section>
     </div>
 
@@ -162,9 +190,9 @@
         <li>2) Crea una <strong>sesión</strong>. Se mostrará el <strong>código</strong> y un <strong>QR</strong>.</li>
         <li>3) Desde otro navegador o móvil, usa el <strong>código</strong> para <strong>unirte</strong> y quedará registro en asistencia.</li>
         <li>4) En “Asistencia” puedes <strong>listar</strong> quiénes se han unido a esa sesión.</li>
-        <li>5) Prueba <strong>Controles en vivo</strong>: verás broadcast y reacciones en tiempo real.</li>
+        <li>5) Controla las <strong>diapositivas</strong> y manda/recibe <strong>reacciones</strong> en vivo.</li>
       </ul>
-      <p class="muted">Para producción: añade preguntas y materiales usando las mismas técnicas.</p>
+      <p class="muted">Para producción: conecta subida de materiales/PPtX y preguntas con la misma mecánica.</p>
     </section>
   </main>
 
@@ -173,46 +201,47 @@
   </footer>
 
   <script>
-    // 🔧 REEMPLAZA estos valores por los de tu proyecto Supabase
+    // ⚙️ CONFIGURA TUS CREDENCIALES
     const SUPABASE_URL = "https://kcmxanjadpriphneygtx.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbXhhbmphZHByaXBobmV5Z3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTU0ODMsImV4cCI6MjA3Mjg3MTQ4M30.J9tJn1pjdUHlFfTPpqWslWLs16CTs22IZiEgCjOMbGY";
-
-    // Cliente Supabase
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Utilidades UI
+    // Utils UI
     const $ = (id) => document.getElementById(id);
     const setText = (id, v) => ($(id).textContent = v);
     const setHTML = (id, v) => ($(id).innerHTML = v);
     const show = (id, flag=true) => ($(id).style.display = flag ? "" : "none");
 
-    // ===== Estado Realtime / Presentación =====
-    let currentRealtime = { chan: null, sessionId: null, sessionCode: null, presenceKey: null };
+    // Estado global
+    let currentRealtime = { chan:null, sessionId:null, sessionCode:null, presenceKey:null };
+    let counts = { love:0, clap:0, question:0, thumbsup:0, thumbsdown:0 };
     window.currentSlide = 1;
     window.totalSlides  = 10;
-    const setSlideInfo = () => setText('slideInfo', `Slide: ${window.currentSlide}/${window.totalSlides}`);
 
     // Mostrar estado de sesión actual
     (async () => {
       const { data } = await supa.auth.getUser();
-      if (data?.user) { show('whoami', true); setText('whoami', `Autenticado: ${data.user.email}`); }
-      setSlideInfo();
+      if (data?.user) {
+        show('whoami', true);
+        setText('whoami', `Autenticado: ${data.user.email}`);
+      }
+      // poner tot slide en UI
+      setText('totSlide', window.totalSlides);
+      setText('curSlide', window.currentSlide);
     })();
 
-    // ===== 1) AUTH =====
+    // ===== AUTH =====
     async function signup(){
       const name = $('name').value.trim();
       const email = $('email').value.trim();
       const password = $('password').value;
       const out = $('authMsg');
-
-      if(!name || !email || !password){ out.textContent = "Completa nombre, correo y clave."; return; }
+      if(!name || !email || !password){ out.textContent="Completa nombre, correo y clave."; return; }
       const { data, error } = await supa.auth.signUp({ email, password });
       if(error){ out.textContent = "Error: " + error.message; return; }
-
       const userId = data.user?.id;
       if(userId){ await supa.from('profiles').insert({ id: userId, name }); }
-      out.textContent = "Registro OK (si tu proyecto requiere confirmación, revisa tu correo).";
+      out.textContent = "Registro OK (revisa correo si tu proyecto confirma).";
       show('whoami', true); setText('whoami', `Autenticado: ${email}`);
     }
 
@@ -228,40 +257,39 @@
     async function logout(){
       await supa.auth.signOut();
       setText('authMsg', "Sesión cerrada.");
-      show('whoami', false);
-      setText('whoami', "");
+      show('whoami', false); setText('whoami', "");
       await cleanupRealtime();
     }
 
-    // ===== 2) CREAR SESIÓN =====
+    // ===== CREAR SESIÓN =====
     async function createSession(){
-      const msg = $('sessionCode');
-      const qr = $('qr');
+      const msg = $('sessionCode'); const qr = $('qr');
       const { data: u } = await supa.auth.getUser();
       if(!u?.user){ msg.textContent = "Primero inicia sesión."; qr.removeAttribute('src'); return; }
-
       const code = 'AULAPUDU-' + Math.floor(10000 + Math.random()*90000);
 
       const { data, error } = await supa.from('sessions').insert({
-        session_code: code, presenter_id: u.user.id, title: 'Sesión en vivo', current_slide: window.currentSlide
-      }).select('id, session_code').single();
+        session_code: code, presenter_id: u.user.id, title: 'Sesión en vivo', current_slide: 1
+      }).select('id, session_code, current_slide').single();
 
       if(error){ msg.textContent = "Error: " + error.message; qr.removeAttribute('src'); return; }
 
-      msg.textContent = data.session_code;
+      window.currentSlide = data.current_slide || 1;
+      setText('curSlide', window.currentSlide);
+
+      msg.textContent = code;
+      $('codeForList').value = code;
       qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(code)}`;
 
-      $('codeForList').value = code;
       await loadAttendance();
       await initRealtimeForSession(code);
     }
 
-    // ===== 3) UNIRSE (ASISTENCIA) =====
+    // ===== UNIRSE (ASISTENCIA) =====
     async function joinSession(){
       const sessionCode = $('joinCode').value.trim();
       const spectatorName = $('spectatorName').value.trim();
       const out = $('joinMsg');
-
       if(!sessionCode || !spectatorName){ out.textContent = "Falta el código o tu nombre."; return; }
 
       const { data: sess, error: e1 } = await supa.from('sessions')
@@ -274,25 +302,22 @@
       const { error: e2 } = await supa.from('attendance').insert({
         session_id: sess.id, spectator_name: spectatorName
       });
-
       if(e2){ out.textContent = "No se pudo registrar asistencia: " + e2.message; return; }
       out.textContent = "¡Asistencia registrada!";
 
-      window.currentSlide = Number(sess.current_slide || 1);
-      setSlideInfo();
-
       $('codeForList').value = sessionCode;
+      window.currentSlide = Number(sess.current_slide || 1);
+      setText('curSlide', window.currentSlide);
+
       await loadAttendance();
       await initRealtimeForSession(sessionCode);
     }
 
-    // ===== 4) LISTAR ASISTENCIA =====
+    // ===== LISTAR ASISTENCIA =====
     async function loadAttendance(){
       const code = $('codeForList').value.trim();
-      const list = $('attList');
-      const info = $('attInfo');
+      const list = $('attList'); const info = $('attInfo');
       list.innerHTML = ""; info.textContent = "";
-
       if(!code){ info.textContent = "Ingresa un código."; return; }
 
       const { data: sess, error: e1 } = await supa.from('sessions')
@@ -301,9 +326,9 @@
       if(e1 || !sess){ info.textContent = "Sesión no encontrada."; return; }
 
       window.currentSlide = Number(sess.current_slide || 1);
-      setSlideInfo();
+      setText('curSlide', window.currentSlide);
 
-      info.innerHTML = `Sesión <span class="mono">${sess.session_code}</span> — creada el ${new Date(sess.created_at).toLocaleString()} <span id="liveCount" class="pill" style="margin-left:8px;display:none"></span>`;
+      info.innerHTML = `Sesión <span class="mono">${sess.session_code}</span> — creada el ${new Date(sess.created_at).toLocaleString()}`;
 
       const { data: rows, error: e2 } = await supa.from('attendance')
         .select('spectator_name, joined_at')
@@ -326,62 +351,107 @@
       const left = document.createElement('div'); left.textContent = name;
       const right = document.createElement('div'); right.className = 'muted';
       right.textContent = new Date(ts).toLocaleString();
-      box.appendChild(left); box.appendChild(right);
-      list.prepend(box);
+      box.appendChild(left); box.appendChild(right); list.prepend(box);
     }
 
-    // ===== 5) REALTIME (presencia + cambios + broadcast) =====
+    // ===== PRESENTACIÓN (SLIDES) =====
+    async function nextSlide(){
+      if (!currentRealtime.sessionId) { alert('Primero crea o únete a una sesión.'); return; }
+      if (window.currentSlide < window.totalSlides) {
+        window.currentSlide++; setText('curSlide', window.currentSlide);
+        // broadcast + persist
+        currentRealtime.chan?.send({ type:'broadcast', event:'slide', payload:{ currentSlide: window.currentSlide }});
+        await supa.from('sessions').update({ current_slide: window.currentSlide }).eq('id', currentRealtime.sessionId);
+      }
+    }
+    async function prevSlide(){
+      if (!currentRealtime.sessionId) { alert('Primero crea o únete a una sesión.'); return; }
+      if (window.currentSlide > 1) {
+        window.currentSlide--; setText('curSlide', window.currentSlide);
+        currentRealtime.chan?.send({ type:'broadcast', event:'slide', payload:{ currentSlide: window.currentSlide }});
+        await supa.from('sessions').update({ current_slide: window.currentSlide }).eq('id', currentRealtime.sessionId);
+      }
+    }
+
+    // ===== REACCIONES =====
+    function paintCounts(){
+      setText('c_love', counts.love);
+      setText('c_clap', counts.clap);
+      setText('c_question', counts.question);
+      setText('c_thumbsup', counts.thumbsup);
+      setText('c_thumbsdown', counts.thumbsdown);
+    }
+    async function sendReaction(kind){
+      if (!currentRealtime.sessionId) { alert('Primero crea o únete a una sesión.'); return; }
+      // broadcast inmediato
+      currentRealtime.chan?.send({ type:'broadcast', event:'reaction', payload:{ kind }});
+      // persistir
+      await supa.from('reactions').insert({ session_id: currentRealtime.sessionId, kind });
+    }
+
+    // ===== REALTIME =====
     async function initRealtimeForSession(sessionCode){
+      // Limpia canal anterior
       await cleanupRealtime();
 
-      const { data: sess, error } = await supa
-        .from('sessions').select('id, session_code').eq('session_code', sessionCode).single();
+      // Busca la sesión
+      const { data: sess, error } = await supa.from('sessions')
+        .select('id, session_code, current_slide').eq('session_code', sessionCode).single();
       if (error || !sess) return;
 
-      currentRealtime.sessionId   = sess.id;
+      currentRealtime.sessionId = sess.id;
       currentRealtime.sessionCode = sess.session_code;
       currentRealtime.presenceKey = Math.random().toString(36).slice(2);
 
+      // sincr. slide UI si viene de DB
+      window.currentSlide = Number(sess.current_slide || 1);
+      setText('curSlide', window.currentSlide);
+
+      // Crea canal con presencia
       currentRealtime.chan = supa.channel(`session:${sessionCode}`, {
         config: { presence: { key: currentRealtime.presenceKey } }
       });
 
-      currentRealtime.chan.on('presence', { event: 'sync' }, () => {
+      // Presence: contador en vivo
+      currentRealtime.chan.on('presence', { event:'sync' }, () => {
         const state = currentRealtime.chan.presenceState();
         const all = Object.values(state).flat();
-        const live = $('liveCount');
-        if (live) { live.style.display = ''; live.textContent = `${all.length} conectados ahora`; }
+        const pill = $('liveCount');
+        if (pill) { pill.style.display=''; pill.textContent = `${all.length} conectados ahora`; }
       });
 
+      // Inserts en attendance → lista en vivo
       currentRealtime.chan.on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'attendance', filter: `session_id=eq.${currentRealtime.sessionId}` },
+        { event:'INSERT', schema:'public', table:'attendance', filter:`session_id=eq.${currentRealtime.sessionId}` },
         (payload) => {
           if ($('codeForList').value.trim() === currentRealtime.sessionCode) {
-            appendAttendanceRow(payload.new.spectator_name, payload.new.joined_at);
+            appendAttendanceRow(payload.new?.spectator_name, payload.new?.joined_at);
           }
         }
       );
 
+      // Inserts en reactions → suma contador
       currentRealtime.chan.on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'reactions', filter: `session_id=eq.${currentRealtime.sessionId}` },
+        { event:'INSERT', schema:'public', table:'reactions', filter:`session_id=eq.${currentRealtime.sessionId}` },
         (payload) => {
-          const msg = `Reacción (DB): ${payload.new?.kind} — ${new Date(payload.new.created_at).toLocaleTimeString()}`;
-          setHTML('rxLog', msg);
+          const k = payload.new?.kind; if (counts[k] !== undefined) { counts[k]++; paintCounts(); }
         }
       );
 
-      currentRealtime.chan.on('broadcast', { event: 'slide' }, (msg) => {
+      // Broadcast: slide
+      currentRealtime.chan.on('broadcast', { event:'slide' }, (msg) => {
         const n = Number(msg.payload?.currentSlide);
-        if (!Number.isNaN(n)) { window.currentSlide = n; setSlideInfo(); }
+        if (!Number.isNaN(n)) { window.currentSlide = n; setText('curSlide', window.currentSlide); }
       });
 
-      currentRealtime.chan.on('broadcast', { event: 'reaction' }, (msg) => {
-        const msgTxt = `Reacción: ${msg.payload?.kind} — ahora`;
-        setHTML('rxLog', msgTxt);
+      // Broadcast: reaction
+      currentRealtime.chan.on('broadcast', { event:'reaction' }, (msg) => {
+        const k = msg.payload?.kind; if (counts[k] !== undefined) { counts[k]++; paintCounts(); }
       });
 
+      // Suscribirse y publicar presencia
       await currentRealtime.chan.subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           const { data: u } = await supa.auth.getUser();
@@ -390,37 +460,20 @@
           await currentRealtime.chan.track({ name, role });
         }
       });
+
+      // Carga contadores iniciales desde DB (para no arrancar en 0 si ya hay reacciones)
+      const { data: agg } = await supa.from('reactions')
+        .select('kind, count:id', { count: 'exact', head:false })
+        .eq('session_id', currentRealtime.sessionId)
+        .returns();
+      counts = { love:0, clap:0, question:0, thumbsup:0, thumbsdown:0 };
+      (agg || []).forEach(r => { counts[r.kind] = (counts[r.kind]||0) + 1; });
+      paintCounts();
     }
 
     async function cleanupRealtime(){
-      if (currentRealtime.chan) {
-        try { await supa.removeChannel(currentRealtime.chan); } catch(e){}
-      }
-      currentRealtime = { chan: null, sessionId: null, sessionCode: null, presenceKey: null };
-    }
-
-    // ===== 6) Broadcast de diapositivas =====
-    async function nextSlide(){
-      if (window.currentSlide < window.totalSlides) {
-        window.currentSlide++; setSlideInfo();
-        currentRealtime?.chan?.send({ type:'broadcast', event:'slide', payload:{ currentSlide: window.currentSlide } });
-        if (currentRealtime?.sessionId) supa.from('sessions').update({ current_slide: window.currentSlide }).eq('id', currentRealtime.sessionId);
-      }
-    }
-    async function prevSlide(){
-      if (window.currentSlide > 1) {
-        window.currentSlide--; setSlideInfo();
-        currentRealtime?.chan?.send({ type:'broadcast', event:'slide', payload:{ currentSlide: window.currentSlide } });
-        if (currentRealtime?.sessionId) supa.from('sessions').update({ current_slide: window.currentSlide }).eq('id', currentRealtime.sessionId);
-      }
-    }
-
-    // ===== 7) Reacciones (broadcast + BD) =====
-    async function sendReaction(kind){
-      if (!currentRealtime?.sessionId) { alert('Primero únete o crea una sesión.'); return; }
-      currentRealtime.chan?.send({ type:'broadcast', event:'reaction', payload:{ kind } });
-      try { await supa.from('reactions').insert({ session_id: currentRealtime.sessionId, kind }); }
-      catch(e){ console.warn('No se pudo guardar la reacción:', e?.message || e); }
+      if (currentRealtime.chan) { try { await supa.removeChannel(currentRealtime.chan); } catch(e){} }
+      currentRealtime = { chan:null, sessionId:null, sessionCode:null, presenceKey:null };
     }
   </script>
 </body>
