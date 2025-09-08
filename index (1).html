@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AulaPudú – Demo con Supabase</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --muted: #9ca3af;
+      --text: #e5e7eb;
+      --accent: #22d3ee;
+      --ok: #34d399;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0; background: var(--bg); color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      line-height: 1.45;
+    }
+    header {
+      padding: 20px; text-align: center; border-bottom: 1px solid #1f2937;
+      position: sticky; top: 0; background: rgba(15,23,42,.8); backdrop-filter: blur(6px);
+    }
+    header h1 { margin: 0; font-size: 22px; letter-spacing: .2px; }
+    header small { color: var(--muted); }
+    main { max-width: 980px; margin: 24px auto; padding: 0 16px 48px; }
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.15));
+      border: 1px solid #1f2937; border-radius: 14px; padding: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    }
+    h2 { font-size: 18px; margin: 0 0 10px; }
+    label { display:block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    input, button, select {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #374151;
+      background: #0b1022; color: var(--text); outline: none;
+    }
+    input::placeholder { color: #64748b; }
+    button {
+      cursor: pointer; transition: .15s ease; border: 1px solid #334155; background: #0b1227;
+    }
+    button:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34,211,238,.15) inset; }
+    .row { display: flex; gap: 10px; align-items: center; }
+    .row > * { flex: 1; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .danger { color: var(--danger); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    .list { display: grid; gap: 8px; }
+    .item {
+      display:flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px; border: 1px dashed #374151; border-radius: 10px;
+      background: #0a0f20;
+    }
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px 16px; }
+    .pill { display:inline-block; padding: 4px 8px; border: 1px solid #334155; border-radius: 999px; font-size: 12px; }
+    .actions { display:flex; gap:8px; flex-wrap: wrap; }
+    .center { text-align:center; }
+    .qr {
+      width: 180px; height: 180px; border-radius: 12px; background: #0a0f20; display:block; margin: 8px auto;
+      border: 1px dashed #374151; object-fit: contain;
+    }
+    a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AulaPudú <small class="muted">| Demo conectada a Supabase</small></h1>
+  </header>
+  <main>
+    <div class="grid">
+      <!-- AUTH CARD -->
+      <section class="card">
+        <h2>1) Autenticación</h2>
+        <p class="muted">Regístrate o inicia sesión para crear sesiones.</p>
+        <label>Nombre</label>
+        <input id="name" placeholder="Tu nombre" />
+        <label>Correo</label>
+        <input id="email" type="email" placeholder="tucorreo@dominio.com" />
+        <label>Clave</label>
+        <input id="password" type="password" placeholder="••••••••" />
+        <div class="actions" style="margin-top:10px">
+          <button onclick="signup()">Registrarme</button>
+          <button onclick="login()">Entrar</button>
+          <button onclick="logout()">Salir</button>
+        </div>
+        <div id="authMsg" class="muted" style="margin-top:8px"></div>
+        <div id="whoami" class="pill" style="margin-top:10px; display:none"></div>
+      </section>
+
+      <!-- PRESENTER: CREATE SESSION -->
+      <section class="card">
+        <h2>2) Crear sesión (presentador)</h2>
+        <p class="muted">Crea un código para compartir con tu audiencia.</p>
+        <div class="actions">
+          <button onclick="createSession()">Generar código</button>
+        </div>
+        <div class="center" style="margin-top:10px">
+          <div class="muted">Código de sesión</div>
+          <div id="sessionCode" class="mono" style="font-size:18px; margin:6px 0;">—</div>
+          <img id="qr" class="qr" alt="QR" />
+        </div>
+      </section>
+
+      <!-- SPECTATOR: JOIN SESSION -->
+      <section class="card">
+        <h2>3) Unirse a una sesión</h2>
+        <p class="muted">Ingresa el código que ves en pantalla y tu nombre.</p>
+        <label>Código de sesión</label>
+        <input id="joinCode" placeholder="p.ej. AULAPUDU-12345" />
+        <label>Tu nombre</label>
+        <input id="spectatorName" placeholder="Nombre para asistencia" />
+        <div class="actions" style="margin-top:10px">
+          <button onclick="joinSession()">Unirme</button>
+        </div>
+        <div id="joinMsg" class="muted" style="margin-top:8px"></div>
+      </section>
+
+      <!-- ATTENDANCE LIST -->
+      <section class="card">
+        <h2>4) Asistencia</h2>
+        <p class="muted">Consulta la lista de personas que se unieron a una sesión.</p>
+        <div class="row">
+          <input id="codeForList" placeholder="Código (AULAPUDU-12345)" />
+          <button onclick="loadAttendance()">Ver asistencia</button>
+        </div>
+        <div id="attInfo" class="muted" style="margin:10px 0 4px"></div>
+        <div id="attList" class="list"></div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:16px">
+      <h2>Ayuda rápida</h2>
+      <ul>
+        <li>1) <strong>Regístrate</strong> o <strong>entra</strong> (Auth de Supabase).</li>
+        <li>2) Crea una <strong>sesión</strong>. Se mostrará el <strong>código</strong> y un <strong>QR</strong>.</li>
+        <li>3) Desde otro navegador o móvil, usa el <strong>código</strong> para <strong>unirte</strong> y quedará registro en asistencia.</li>
+        <li>4) En “Asistencia” puedes <strong>listar</strong> quiénes se han unido a esa sesión.</li>
+      </ul>
+      <p class="muted">Para producción: añade preguntas, reacciones y tu lógica de presentaciones usando las mismas técnicas.</p>
+    </section>
+  </main>
+
+  <footer>
+    Hecho con ❤ | <a href="https://supabase.com" target="_blank" rel="noreferrer">Supabase</a> + <a href="https://pages.github.com/" target="_blank" rel="noreferrer">GitHub Pages</a>
+  </footer>
+
+  <script>
+    // 🔧 REEMPLAZA estos valores por los de tu proyecto Supabase
+    const SUPABASE_URL = "https://TU-PROYECTO.supabase.co";
+    const SUPABASE_ANON_KEY = "TU-ANON-KEY";
+
+    // Cliente Supabase
+    const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Utilidades UI
+    const $ = (id) => document.getElementById(id);
+    const setText = (id, v) => ($(id).textContent = v);
+    const setHTML = (id, v) => ($(id).innerHTML = v);
+    const show = (id, flag=true) => ($(id).style.display = flag ? "" : "none");
+
+    // Mostrar estado de sesión actual
+    (async () => {
+      const { data } = await supa.auth.getUser();
+      if (data?.user) {
+        show('whoami', true);
+        setText('whoami', `Autenticado: ${data.user.email}`);
+      }
+    })();
+
+    // ===== 1) AUTH =====
+    async function signup(){
+      const name = $('name').value.trim();
+      const email = $('email').value.trim();
+      const password = $('password').value;
+      const out = $('authMsg');
+
+      if(!name || !email || !password){
+        out.textContent = "Completa nombre, correo y clave.";
+        return;
+      }
+      const { data, error } = await supa.auth.signUp({ email, password });
+      if(error){ out.textContent = "Error: " + error.message; return; }
+
+      const userId = data.user?.id;
+      if(userId){
+        await supa.from('profiles').insert({ id: userId, name });
+      }
+      out.textContent = "Registro OK (si tu proyecto requiere confirmación, revisa tu correo).";
+      show('whoami', true);
+      setText('whoami', `Autenticado: ${email}`);
+    }
+
+    async function login(){
+      const email = $('email').value.trim();
+      const password = $('password').value;
+      const out = $('authMsg');
+
+      const { data, error } = await supa.auth.signInWithPassword({ email, password });
+      out.textContent = error ? ("Login falló: " + error.message) : "Login OK.";
+      if(!error){
+        show('whoami', true);
+        setText('whoami', `Autenticado: ${email}`);
+      }
+    }
+
+    async function logout(){
+      await supa.auth.signOut();
+      setText('authMsg', "Sesión cerrada.");
+      show('whoami', false);
+      setText('whoami', "");
+    }
+
+    // ===== 2) CREAR SESIÓN =====
+    async function createSession(){
+      const msg = $('sessionCode');
+      const qr = $('qr');
+      const { data: u } = await supa.auth.getUser();
+      if(!u?.user){ msg.textContent = "Primero inicia sesión."; qr.removeAttribute('src'); return; }
+
+      const code = 'AULAPUDU-' + Math.floor(10000 + Math.random()*90000);
+
+      const { error } = await supa.from('sessions').insert({
+        session_code: code,
+        presenter_id: u.user.id,
+        title: 'Sesión en vivo'
+      });
+
+      if(error){ msg.textContent = "Error: " + error.message; qr.removeAttribute('src'); return; }
+
+      msg.textContent = code;
+      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(code)}`;
+    }
+
+    // ===== 3) UNIRSE (ASISTENCIA) =====
+    async function joinSession(){
+      const sessionCode = $('joinCode').value.trim();
+      const spectatorName = $('spectatorName').value.trim();
+      const out = $('joinMsg');
+
+      if(!sessionCode || !spectatorName){
+        out.textContent = "Falta el código o tu nombre.";
+        return;
+      }
+
+      // Buscar sesión por código
+      const { data: sess, error: e1 } = await supa.from('sessions')
+        .select('id, session_code, active')
+        .eq('session_code', sessionCode)
+        .single();
+
+      if(e1 || !sess){ out.textContent = "Sesión no encontrada."; return; }
+      if(sess.active === false){ out.textContent = "La sesión no está activa."; return; }
+
+      // Insertar asistencia
+      const { error: e2 } = await supa.from('attendance').insert({
+        session_id: sess.id, spectator_name: spectatorName
+      });
+
+      out.textContent = e2 ? ("No se pudo registrar asistencia: " + e2.message) : "¡Asistencia registrada!";
+    }
+
+    // ===== 4) LISTAR ASISTENCIA =====
+    async function loadAttendance(){
+      const code = $('codeForList').value.trim();
+      const list = $('attList');
+      const info = $('attInfo');
+      list.innerHTML = "";
+      info.textContent = "";
+
+      if(!code){ info.textContent = "Ingresa un código."; return; }
+
+      // obtener id de sesión
+      const { data: sess, error: e1 } = await supa.from('sessions')
+        .select('id, session_code, title, created_at')
+        .eq('session_code', code).single();
+      if(e1 || !sess){ info.textContent = "Sesión no encontrada."; return; }
+
+      info.innerHTML = `Sesión <span class="mono">${sess.session_code}</span> — creada el ${new Date(sess.created_at).toLocaleString()}`;
+
+      const { data: rows, error: e2 } = await supa.from('attendance')
+        .select('spectator_name, joined_at')
+        .eq('session_id', sess.id)
+        .order('joined_at', { ascending: false });
+
+      if(e2){ info.textContent = "Error obteniendo asistencia: " + e2.message; return; }
+
+      if(!rows || rows.length === 0){
+        list.innerHTML = '<div class="muted">No hay registros para esta sesión.</div>';
+        return;
+      }
+
+      rows.forEach(r => {
+        const box = document.createElement('div');
+        box.className = 'item';
+        const left = document.createElement('div');
+        left.textContent = r.spectator_name;
+        const right = document.createElement('div');
+        right.className = 'muted';
+        right.textContent = new Date(r.joined_at).toLocaleString();
+        box.appendChild(left);
+        box.appendChild(right);
+        list.appendChild(box);
+      });
+    }
+  </script>
+</body>
+</html>
