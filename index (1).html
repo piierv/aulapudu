@@ -1,315 +1,1651 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AulaPudú – Demo con Supabase</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #111827;
-      --muted: #9ca3af;
-      --text: #e5e7eb;
-      --accent: #22d3ee;
-      --ok: #34d399;
-      --warn: #f59e0b;
-      --danger: #ef4444;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; padding: 0; background: var(--bg); color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-      line-height: 1.45;
-    }
-    header {
-      padding: 20px; text-align: center; border-bottom: 1px solid #1f2937;
-      position: sticky; top: 0; background: rgba(15,23,42,.8); backdrop-filter: blur(6px);
-    }
-    header h1 { margin: 0; font-size: 22px; letter-spacing: .2px; }
-    header small { color: var(--muted); }
-    main { max-width: 980px; margin: 24px auto; padding: 0 16px 48px; }
-    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.15));
-      border: 1px solid #1f2937; border-radius: 14px; padding: 16px;
-      box-shadow: 0 4px 14px rgba(0,0,0,.25);
-    }
-    h2 { font-size: 18px; margin: 0 0 10px; }
-    label { display:block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-    input, button, select {
-      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #374151;
-      background: #0b1022; color: var(--text); outline: none;
-    }
-    input::placeholder { color: #64748b; }
-    button {
-      cursor: pointer; transition: .15s ease; border: 1px solid #334155; background: #0b1227;
-    }
-    button:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34,211,238,.15) inset; }
-    .row { display: flex; gap: 10px; align-items: center; }
-    .row > * { flex: 1; }
-    .muted { color: var(--muted); font-size: 13px; }
-    .ok { color: var(--ok); }
-    .warn { color: var(--warn); }
-    .danger { color: var(--danger); }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-    .list { display: grid; gap: 8px; }
-    .item {
-      display:flex; justify-content: space-between; align-items: center;
-      padding: 10px 12px; border: 1px dashed #374151; border-radius: 10px;
-      background: #0a0f20;
-    }
-    footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px 16px; }
-    .pill { display:inline-block; padding: 4px 8px; border: 1px solid #334155; border-radius: 999px; font-size: 12px; }
-    .actions { display:flex; gap:8px; flex-wrap: wrap; }
-    .center { text-align:center; }
-    .qr {
-      width: 180px; height: 180px; border-radius: 12px; background: #0a0f20; display:block; margin: 8px auto;
-      border: 1px dashed #374151; object-fit: contain;
-    }
-    a { color: var(--accent); text-decoration: none; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AulaPudú - Plataforma Interactiva de Presentaciones</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Nueva paleta de colores pastel */
+        :root {
+            --primary-blue: #A7C7E7;
+            --primary-green: #A8E6CF;
+            --light-blue: #D4E7F7;
+            --light-green: #D4F3E6;
+            --light-yellow: #FFF2CC;
+            --light-pink: #FFD6E0;
+            --white: #FFFFFF;
+            --text-dark: #5A5A5A;
+            --text-medium: #7E7E7E;
+            --text-light: #A0A0A0;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --shadow-hover: rgba(0, 0, 0, 0.12);
+            --reaction-active: #A7C7E7;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-blue);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Encabezado mejorado */
+        header {
+            background-color: var(--white);
+            padding: 15px 30px;
+            box-shadow: 0 2px 15px var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 0 0 15px 15px;
+        }
+
+        header .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header .logo-icon {
+            width: 45px;
+            height: 45px;
+            background-color: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        header .logo h1 {
+            margin: 0;
+            color: var(--text-dark);
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        nav button {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 8px var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        nav button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px var(--shadow-hover);
+        }
+
+        /* Contenedor principal */
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Tarjetas mejoradas */
+        .card {
+            background-color: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 8px 20px var(--shadow);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .card h2 {
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .card p {
+            color: var(--text-medium);
+            margin-bottom: 25px;
+        }
+
+        .card .option-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: calc(100% - 40px);
+            padding: 18px;
+            margin: 0 auto 15px auto;
+            background-color: var(--light-green);
+            color: var(--text-dark);
+            text-decoration: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .card .option-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px var(--shadow-hover);
+            background-color: var(--primary-green);
+        }
+
+        /* Panel del presentador mejorado */
+        .presenter-dashboard {
+            display: flex;
+            flex: 1;
+            background-color: var(--light-blue);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+            color: var(--white);
+            padding: 25px 15px;
+            box-shadow: 2px 0 15px var(--shadow);
+            border-radius: 0 20px 20px 0;
+        }
+
+        .sidebar h3 {
+            margin-top: 0;
+            color: var(--text-dark);
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--white);
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar ul li {
+            margin-bottom: 12px;
+        }
+
+        .sidebar ul li a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar ul li a:hover, .sidebar ul li a.active {
+            background-color: var(--white);
+            box-shadow: 0 4px 8px var(--shadow);
+            transform: translateX(5px);
+        }
+
+        .sidebar-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            background-color: var(--light-blue);
+            overflow-y: auto;
+        }
+
+        .main-content h2 {
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 700;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-blue);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .dashboard-card {
+            background-color: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px var(--shadow);
+            padding: 25px;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px var(--shadow-hover);
+        }
+
+        .dashboard-card h4 {
+            margin-top: 0;
+            color: var(--text-dark);
+            font-size: 20px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dashboard-card p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-medium);
+        }
+
+        .dashboard-card button {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 8px var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-card button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px var(--shadow-hover);
+        }
+
+        .qr-code-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        
+        .qr-code-section img {
+            width: 180px;
+            height: 180px;
+            border: 1px solid var(--light-blue);
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px var(--shadow);
+        }
+        
+        .qr-code-section p {
+            font-size: 18px;
+            color: var(--text-medium);
+            margin: 10px 0;
+        }
+        
+        .session-id {
+            font-weight: 700;
+            color: var(--text-dark);
+            background-color: var(--light-yellow);
+            padding: 8px 15px;
+            border-radius: 50px;
+            margin-top: 10px;
+        }
+
+        /* Interfaz del espectador mejorada */
+        .spectator-interface {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .spectator-interface h2 {
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .spectator-presentation-area {
+            background-color: var(--white);
+            width: 100%;
+            min-height: 400px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-medium);
+            font-size: 24px;
+            box-shadow: 0 5px 15px var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .slide-nav {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .slide-nav button {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .slide-counter {
+            color: var(--text-medium);
+            font-size: 16px;
+        }
+
+        .spectator-interactions {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .spectator-interactions button {
+            background-color: var(--white);
+            color: var(--text-dark);
+            border: none;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px var(--shadow);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .spectator-interactions button.reaction-active {
+            background-color: var(--reaction-active);
+            transform: scale(1.1);
+        }
+
+        .spectator-interactions button:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 8px 15px var(--shadow-hover);
+        }
+
+        .reaction-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--primary-blue);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .spectator-input-card {
+            background-color: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 8px 20px var(--shadow);
+            padding: 25px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 25px;
+            text-align: left;
+        }
+
+        .spectator-input-card label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+
+        .spectator-input-card input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 2px solid var(--light-blue);
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .spectator-input-card input[type="text"]:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+        }
+
+        .spectator-input-card button {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            font-weight: 600;
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+
+        .spectator-input-card button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px var(--shadow-hover);
+        }
+
+        /* Interfaz de presentador durante presentación */
+        .presenter-live-view {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 20px;
+        }
+
+        .presentation-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--white);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px var(--shadow);
+        }
+
+        .live-reactions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .reaction-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background-color: var(--light-blue);
+            border-radius: 10px;
+            min-width: 60px;
+        }
+
+        .reaction-badge .count {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .timer-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .timer-display {
+            font-size: 18px;
+            font-weight: bold;
+            background-color: var(--light-green);
+            padding: 8px 15px;
+            border-radius: 50px;
+        }
+
+        /* Formularios de autenticación mejorados */
+        .auth-form {
+            background-color: var(--white);
+            border-radius: 20px;
+            box-shadow: 0 8px 20px var(--shadow);
+            padding: 35px;
+            width: 100%;
+            max-width: 450px;
+            text-align: left;
+        }
+
+        .auth-form h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        .auth-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--text-dark);
+        }
+
+        .auth-form input[type="email"],
+        .auth-form input[type="password"],
+        .auth-form input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 12px;
+            margin-bottom: 18px;
+            border: 2px solid var(--light-blue);
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .auth-form input:focus {
+            border-color: var(--primary-blue);
+            outline: none;
+        }
+
+        .auth-form button {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 14px 24px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            font-weight: 600;
+            box-shadow: 0 4px 8px var(--shadow);
+            margin-top: 10px;
+        }
+
+        .auth-form button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px var(--shadow-hover);
+        }
+
+        .auth-form .switch-form {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-medium);
+        }
+
+        .auth-form .switch-form a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* Tarjetas de contenido mejoradas */
+        .content-card {
+            background-color: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .content-card h3 {
+            color: var(--text-dark);
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .content-card ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .content-card ul li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--light-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-card ul li:last-child {
+            border-bottom: none;
+        }
+        
+        .content-card ul li button {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 5px var(--shadow);
+            margin-left: 8px;
+        }
+        
+        .content-card ul li button.red {
+            background-color: var(--light-pink);
+            color: var(--text-dark);
+        }
+        
+        .content-card ul li button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow-hover);
+        }
+
+        /* Sistema de preguntas y formularios */
+        .question-builder {
+            background-color: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .question-builder h3 {
+            color: var(--text-dark);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        
+        .question-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .question-form input, .question-form textarea {
+            padding: 12px;
+            border: 2px solid var(--light-blue);
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        .question-form textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .option-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .option-input input {
+            flex: 1;
+        }
+        
+        .add-option {
+            background-color: var(--light-green);
+            color: var(--text-dark);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            align-self: flex-start;
+        }
+        
+        .question-preview {
+            background-color: var(--light-blue);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .question-preview h4 {
+            margin-top: 0;
+            color: var(--text-dark);
+        }
+        
+        .question-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .question-type-selector button {
+            background-color: var(--light-blue);
+            color: var(--text-dark);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .question-type-selector button.active {
+            background-color: var(--primary-blue);
+            color: var(--white);
+        }
+
+        /* Reportes HTML */
+        .report-container {
+            background-color: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .report-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light-blue);
+        }
+        
+        .report-content {
+            margin-bottom: 25px;
+        }
+        
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .report-table th, .report-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--light-blue);
+        }
+        
+        .report-table th {
+            background-color: var(--light-blue);
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+        
+        .report-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        /* Animaciones y microinteracciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Ajustes responsivos */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 15px 20px;
+                text-align: center;
+            }
+            
+            header .logo {
+                margin-bottom: 15px;
+            }
+            
+            .presenter-dashboard {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                padding: 20px;
+                border-radius: 0;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .card, .auth-form {
+                max-width: 95%;
+                padding: 25px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .spectator-interactions {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .spectator-interactions button {
+                width: 50px;
+                height: 50px;
+                margin: 5px;
+            }
+            
+            .spectator-presentation-area {
+                min-height: 300px;
+            }
+            
+            /* Mejoras para móviles en lista de preguntas */
+            #saved-questions li {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            #saved-questions li > div {
+                margin-top: 10px;
+                display: flex;
+                gap: 10px;
+                width: 100%;
+                justify-content: flex-end;
+            }
+            
+            #saved-questions li button {
+                flex: 1;
+                margin-left: 0;
+            }
+            
+            .presentation-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .live-reactions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>AulaPudú <small class="muted">| Demo conectada a Supabase</small></h1>
-  </header>
-  <main>
-    <div class="grid">
-      <!-- AUTH CARD -->
-      <section class="card">
-        <h2>1) Autenticación</h2>
-        <p class="muted">Regístrate o inicia sesión para crear sesiones.</p>
-        <label>Nombre</label>
-        <input id="name" placeholder="Tu nombre" />
-        <label>Correo</label>
-        <input id="email" type="email" placeholder="tucorreo@dominio.com" />
-        <label>Clave</label>
-        <input id="password" type="password" placeholder="••••••••" />
-        <div class="actions" style="margin-top:10px">
-          <button onclick="signup()">Registrarme</button>
-          <button onclick="login()">Entrar</button>
-          <button onclick="logout()">Salir</button>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">📚</div>
+            <h1>AulaPudú</h1>
         </div>
-        <div id="authMsg" class="muted" style="margin-top:8px"></div>
-        <div id="whoami" class="pill" style="margin-top:10px; display:none"></div>
-      </section>
+        <nav>
+            <button onclick="showPage('welcome')">Inicio</button>
+        </nav>
+    </header>
 
-      <!-- PRESENTER: CREATE SESSION -->
-      <section class="card">
-        <h2>2) Crear sesión (presentador)</h2>
-        <p class="muted">Crea un código para compartir con tu audiencia.</p>
-        <div class="actions">
-          <button onclick="createSession()">Generar código</button>
+    <div id="welcome" class="container">
+        <div class="card fade-in">
+            <h2>Bienvenido a AulaPudú</h2>
+            <p>Selecciona tu rol para comenzar:</p>
+            <button class="option-button" onclick="showPage('presenter-login')">
+                <span class="sidebar-icon">👨‍🏫</span> Soy Presentador
+            </button>
+            <button class="option-button" onclick="showPage('spectator-join')">
+                <span class="sidebar-icon">👨‍🎓</span> Soy Espectador
+            </button>
         </div>
-        <div class="center" style="margin-top:10px">
-          <div class="muted">Código de sesión</div>
-          <div id="sessionCode" class="mono" style="font-size:18px; margin:6px 0;">—</div>
-          <img id="qr" class="qr" alt="QR" />
-        </div>
-      </section>
-
-      <!-- SPECTATOR: JOIN SESSION -->
-      <section class="card">
-        <h2>3) Unirse a una sesión</h2>
-        <p class="muted">Ingresa el código que ves en pantalla y tu nombre.</p>
-        <label>Código de sesión</label>
-        <input id="joinCode" placeholder="p.ej. AULAPUDU-12345" />
-        <label>Tu nombre</label>
-        <input id="spectatorName" placeholder="Nombre para asistencia" />
-        <div class="actions" style="margin-top:10px">
-          <button onclick="joinSession()">Unirme</button>
-        </div>
-        <div id="joinMsg" class="muted" style="margin-top:8px"></div>
-      </section>
-
-      <!-- ATTENDANCE LIST -->
-      <section class="card">
-        <h2>4) Asistencia</h2>
-        <p class="muted">Consulta la lista de personas que se unieron a una sesión.</p>
-        <div class="row">
-          <input id="codeForList" placeholder="Código (AULAPUDU-12345)" />
-          <button onclick="loadAttendance()">Ver asistencia</button>
-        </div>
-        <div id="attInfo" class="muted" style="margin:10px 0 4px"></div>
-        <div id="attList" class="list"></div>
-      </section>
     </div>
 
-    <section class="card" style="margin-top:16px">
-      <h2>Ayuda rápida</h2>
-      <ul>
-        <li>1) <strong>Regístrate</strong> o <strong>entra</strong> (Auth de Supabase).</li>
-        <li>2) Crea una <strong>sesión</strong>. Se mostrará el <strong>código</strong> y un <strong>QR</strong>.</li>
-        <li>3) Desde otro navegador o móvil, usa el <strong>código</strong> para <strong>unirte</strong> y quedará registro en asistencia.</li>
-        <li>4) En “Asistencia” puedes <strong>listar</strong> quiénes se han unido a esa sesión.</li>
-      </ul>
-      <p class="muted">Para producción: añade preguntas, reacciones y tu lógica de presentaciones usando las mismas técnicas.</p>
-    </section>
-  </main>
+    <div id="presenter-login" class="container" style="display: none;">
+        <div class="auth-form fade-in">
+            <h2 id="auth-title">Inicio de Presentador</h2>
+            <form id="login-form">
+                <label for="email">Correo electrónico:</label>
+                <input type="email" id="email" name="email" required>
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" name="password" required>
+                <button type="submit" onclick="event.preventDefault(); authenticateUser()">Iniciar Sesión</button>
+                <div class="switch-form">
+                    ¿No tienes una cuenta? <a href="#" onclick="toggleAuthForm()">Regístrate aquí</a>
+                </div>
+            </form>
+            <form id="register-form" style="display: none;">
+                <label for="reg-name">Nombre completo:</label>
+                <input type="text" id="reg-name" name="reg-name" required>
+                <label for="reg-email">Correo electrónico:</label>
+                <input type="email" id="reg-email" name="reg-email" required>
+                <label for="reg-password">Contraseña:</label>
+                <input type="password" id="reg-password" name="reg-password" required>
+                <label for="confirm-password">Confirmar Contraseña:</label>
+                <input type="password" id="confirm-password" name="confirm-password" required>
+                <button type="submit" onclick="event.preventDefault(); registerUser()">Registrarse</button>
+                <div class="switch-form">
+                    ¿Ya tienes una cuenta? <a href="#" onclick="toggleAuthForm()">Inicia sesión aquí</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-  <footer>
-    Hecho con ❤ | <a href="https://supabase.com" target="_blank" rel="noreferrer">Supabase</a> + <a href="https://pages.github.com/" target="_blank" rel="noreferrer">GitHub Pages</a>
-  </footer>
+    <div id="presenter-dashboard" class="presenter-dashboard" style="display: none;">
+        <div class="sidebar">
+            <h3>Menú del Presentador</h3>
+            <ul>
+                <li><a href="#" class="active" onclick="showPresenterContent('overview')"><span class="sidebar-icon">📊</span> Resumen</a></li>
+                <li><a href="#" onclick="showPresenterContent('presentations')"><span class="sidebar-icon">📝</span> Presentaciones</a></li>
+                <li><a href="#" onclick="showPresenterContent('live-session')"><span class="sidebar-icon">🔴</span> Sesión en Vivo</a></li>
+                <li><a href="#" onclick="showPresenterContent('questions')"><span class="sidebar-icon">❓</span> Preguntas</a></li>
+                <li><a href="#" onclick="showPresenterContent('spectator-management')"><span class="sidebar-icon">👥</span> Gestión de Espectadores</a></li>
+                <li><a href="#" onclick="showPresenterContent('course-materials')"><span class="sidebar-icon">📚</span> Materiales del Curso</a></li>
+                <li><a href="#" onclick="showPresenterContent('reports')"><span class="sidebar-icon">📈</span> Informes</a></li>
+                <li><a href="#" onclick="alert('¡Página de configuración próximamente!')"><span class="sidebar-icon">⚙️</span> Configuración</a></li>
+                <li><a href="#" onclick="logout()"><span class="sidebar-icon">🚪</span> Cerrar Sesión</a></li>
+            </ul>
+        </div>
+        <div class="main-content">
+            <div id="presenter-overview-content">
+                <h2>Resumen del Dashboard</h2>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card fade-in">
+                        <h4><span class="sidebar-icon">📊</span> Presentación Actual</h4>
+                        <p id="current-presentation-text">No hay presentación activa. Inicia una nueva o continúa desde tu biblioteca.</p>
+                        <button onclick="showPresenterContent('presentations')">Gestionar Presentaciones</button>
+                    </div>
+                    <div class="dashboard-card fade-in">
+                        <h4><span class="sidebar-icon">🔴</span> Estado de Sesión en Vivo</h4>
+                        <div class="qr-code-section">
+                            <img id="qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=AULAPUDU-12345" alt="Código QR para unirse">
+                            <p>Escanear para unirse:</p>
+                            <div class="session-id" id="session-id-display">AULAPUDU-12345</div>
+                            <button onclick="generateNewSession()">Generar Nuevo Código QR</button>
+                        </div>
+                    </div>
+                    <div class="dashboard-card fade-in">
+                        <h4><span class="sidebar-icon">📈</span> Actividad Reciente</h4>
+                        <p>5 nuevos espectadores se unieron a la presentación 'Introducción a la IA'.</p>
+                        <p>Resultados del quiz exportados para 'Revisión del Módulo 1'.</p>
+                        <button onclick="showPresenterContent('reports')">Ver Toda la Actvidad</button>
+                    </div>
+                </div>
+            </div>
 
-  <script>
-    // 🔧 REEMPLAZA estos valores por los de tu proyecto Supabase
-    const SUPABASE_URL = "https://kcmxanjadpriphneygtx.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbXhhbmphZHByaXBobmV5Z3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTU0ODMsImV4cCI6MjA3Mjg3MTQ4M30.J9tJn1pjdUHlFfTPpqWslWLs16CTs22IZiEgCjOMbGY";
+            <div id="presenter-presentations-content" style="display: none;">
+                <h2>Mis Presentaciones</h2>
+                <div class="content-card fade-in">
+                    <h3><span class="sidebar-icon">📤</span> Subir Nueva Presentación</h3>
+                    <p>Formatos soportados: PDF, PowerPoint (PPT/PPTX)</p>
+                    <input type="file" id="presentation-upload" accept=".pdf,.ppt,.pptx" style="margin-bottom: 15px;">
+                    <button onclick="uploadPresentation()">Subir Presentación</button>
+                </div>
+                <div class="content-card fade-in">
+                    <h3><span class="sidebar-icon">📁</span> Presentaciones Disponibles</h3>
+                    <ul id="presentations-list">
+                        <li>
+                            <span>Introducción a la Ciencia de Datos</span>
+                            <div>
+                                <button onclick="loadPresentation('Introduction to Data Science')">Cargar</button>
+                                <button class="red">Eliminar</button>
+                            </div>
+                        </li>
+                        <li>
+                            <span>Fundamentos de Desarrollo Web (PDF)</span>
+                            <div>
+                                <button onclick="loadPresentation('Web Development Basics')">Cargar</button>
+                                <button class="red">Eliminar</button>
+                            </div>
+                        </li>
+                        <li>
+                            <span>Habilidades de Comunicación Efectiva (Video)</span>
+                            <div>
+                                <button onclick="loadPresentation('Communication Skills')">Cargar</button>
+                                <button class="red">Eliminar</button>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
 
-    // Cliente Supabase
-    const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            <div id="presenter-live-session-content" style="display: none;">
+                <h2>Control de Sesión en Vivo</h2>
+                
+                <div class="presenter-live-view">
+                    <div class="presentation-controls">
+                        <div class="live-reactions">
+                            <div class="reaction-badge">
+                                <span>❤️</span>
+                                <span class="count" id="count-love">0</span>
+                            </div>
+                            <div class="reaction-badge">
+                                <span>👏</span>
+                                <span class="count" id="count-clap">0</span>
+                            </div>
+                            <div class="reaction-badge">
+                                <span>❓</span>
+                                <span class="count" id="count-question">0</span>
+                            </div>
+                            <div class="reaction-badge">
+                                <span>👍</span>
+                                <span class="count" id="count-thumbsup">0</span>
+                            </div>
+                            <div class="reaction-badge">
+                                <span>👎</span>
+                                <span class="count" id="count-thumbsdown">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="timer-section">
+                            <span class="timer-display" id="timer-display">00:00</span>
+                            <button onclick="startTimer()">Iniciar Timer</button>
+                            <button onclick="resetTimer()">Reiniciar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="content-card fade-in">
+                        <h3><span class="sidebar-icon">🔴</span> Presentando Actualmente: <span id="current-presentation-title">Introducción a la Ciencia de Datos</span></h3>
+                        <p>Diapositiva Actual: <span id="current-slide">1</span>/<span id="total-slides">10</span></p>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="prevSlide()">Diapositiva Anterior</button>
+                            <button onclick="nextSlide()">Siguiente Diapositiva</button>
+                            <button style="background-color: var(--light-pink); color: var(--text-dark);" onclick="endSession()">Finalizar Sesión</button>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card fade-in">
+                            <h4><span class="sidebar-icon">📊</span> Encuestas y Quizzes</h4>
+                            <p>Crea encuestas interactivas y quizzes para tu audiencia.</p>
+                            <button onclick="showPresenterContent('questions')">Crear Nueva Pregunta</button>
+                        </div>
+                        <div class="dashboard-card fade-in">
+                            <h4><span class="sidebar-icon">👥</span> Espectadores Conectados</h4>
+                            <p id="connected-spectators">15 espectadores activos</p>
+                            <button onclick="showPresenterContent('spectator-management')">Gestionar Espectadores</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    // Utilidades UI
-    const $ = (id) => document.getElementById(id);
-    const setText = (id, v) => ($(id).textContent = v);
-    const setHTML = (id, v) => ($(id).innerHTML = v);
-    const show = (id, flag=true) => ($(id).style.display = flag ? "" : "none");
+            <div id="presenter-questions-content" style="display: none;">
+                <h2>Sistema de Preguntas y Formularios</h2>
+                <div class="question-builder fade-in">
+                    <h3><span class="sidebar-icon">❓</span> Crear Nueva Pregunta</h3>
+                    <div class="question-type-selector">
+                        <button class="active" onclick="setQuestionType('multiple-choice')">Opción Múltiple</button>
+                        <button onclick="setQuestionType('true-false')">Verdadero/Falso</button>
+                        <button onclick="setQuestionType('open-ended')">Respuesta Abierta</button>
+                    </div>
+                    <div class="question-form">
+                        <input type="text" id="question-title" placeholder="Escribe tu pregunta aquí">
+                        <div id="options-container" class="options-container">
+                            <div class="option-input">
+                                <input type="text" placeholder="Opción 1">
+                                <button class="red" onclick="removeOption(this)">✕</button>
+                            </div>
+                            <div class="option-input">
+                                <input type="text" placeholder="Opción 2">
+                                <button class="red" onclick="removeOption(this)">✕</button>
+                            </div>
+                        </div>
+                        <button class="add-option" onclick="addOption()">+ Añadir Opción</button>
+                        <button class="option-button" onclick="saveQuestion()" style="width: 100%; margin-top: 15px;">
+                            <span class="sidebar-icon">💾</span> Guardar Pregunta
+                        </button>
+                    </div>
+                </div>
+                <div class="content-card fade-in">
+                    <h3><span class="sidebar-icon">📋</span> Preguntas Guardadas</h3>
+                    <ul id="saved-questions">
+                        <li>
+                            <div>
+                                <strong>¿Cuál es la capital de Francia?</strong>
+                                <small>Tipo: Opción múltiple</small>
+                            </div>
+                            <div>
+                                <button>Usar ahora</button>
+                                <button>Usar con timer</button>
+                                <button class="red">Eliminar</button>
+                            </div>
+                        </li>
+                        <li>
+                            <div>
+                                <strong>Verdadero o Falso: HTML es un lenguaje de programación</strong>
+                                <small>Tipo: Verdadero/Falso</small>
+                            </div>
+                            <div>
+                                <button>Usar ahora</button>
+                                <button>Usar con timer</button>
+                                <button class="red">Eliminar</button>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
 
-    // Mostrar estado de sesión actual
-    (async () => {
-      const { data } = await supa.auth.getUser();
-      if (data?.user) {
-        show('whoami', true);
-        setText('whoami', `Autenticado: ${data.user.email}`);
-      }
-    })();
+            <div id="presenter-spectator-management-content" style="display: none;">
+                <h2>Gestión de Espectadores</h2>
+                <div class="content-card fade-in">
+                    <h3><span class="sidebar-icon">👥</span> Espectadores Conectados (<span id="active-spectators">15</span> Activos)</h3>
+                    <ul id="spectators-list">
+                        <li>
+                            <span>Ana (Grupo Rojo)</span>
+                            <div>
+                                <button>Ver Perfil</button>
+                                <button>Mensaje</button>
+                            </div>
+                        </li>
+                        <li>
+                            <span>Carlos (Grupo Azul)</span>
+                            <div>
+                                <button>Ver Perfil</button>
+                                <button>Mensaje</button>
+                            </div>
+                        </li>
+                        <li>
+                            <span>Elena (Grupo Verde)</span>
+                            <div>
+                                <button>Ver Perfil</button>
+                                <button>Mensaje</button>
+                            </div>
+                        </li>
+                    </ul>
+                    <button style="margin-top: 15px;">Agrupar Espectadores Aleatoriamente</button>
+                </div>
+                <div class="content-card fade-in">
+                    <h3><span class="sidebar-icon">📎</span> Archivos de Espectadores</h3>
+                    <p>No hay nuevos archivos subidos por espectadores.</p>
+                    <button>Ver Todos los Archivos</button>
+                </div>
+            </div>
 
-    // ===== 1) AUTH =====
-    async function signup(){
-      const name = $('name').value.trim();
-      const email = $('email').value.trim();
-      const password = $('password').value;
-      const out = $('authMsg');
+            <div id="presenter-course-materials-content" style="display: none;">
+                <h2>Materiales del Curso</h2>
+                <div class="content-card fade-in">
+                    <h3><span class="sidebar-icon">📤</span> Subir Nuevo Material</h3>
+                    <p>Formatos soportados: PDF, DOCX, PPTX, imágenes</p>
+                    <input type="file" id="material-upload" style="margin-bottom: 15px;">
+                    <button onclick="uploadMaterial()">Subir Material</button>
+                </div>
+                <div class="content-card fade-in">
+                    <h3><span class="sidebar-icon">📚</span> Material de Estudio Disponible</h3>
+                    <ul id="materials-list">
+                        <li>
+                            <span>Apuntes de Clase - Capítulo 1 (PDF)</span>
+                            <button>Descargar</button>
+                        </li>
+                        <li>
+                            <span>Tarea 1 (DOCX)</span>
+                            <button>Descargar</button>
+                        </li>
+                        <li>
+                            <span>Video Complementario: Temas Avanzados</span>
+                            <button>Ver</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
 
-      if(!name || !email || !password){
-        out.textContent = "Completa nombre, correo y clave.";
-        return;
-      }
-      const { data, error } = await supa.auth.signUp({ email, password });
-      if(error){ out.textContent = "Error: " + error.message; return; }
+            <div id="presenter-reports-content" style="display: none;">
+                <h2>Informes y Analíticas</h2>
+                <div class="content-card fade-in">
+                    <h3><span class="sidebar-icon">📝</span> Resultados de Quiz: 'Intro a IA'</h3>
+                    <p>Resumen de respuestas y datos de participantes.</p>
+                    <button onclick="generateHTMLReport()">Generar Reporte HTML</button>
+                </div>
+                <div class="content-card fade-in">
+                    <h3><span class="sidebar-icon">✅</span> Reporte de Asistencia: Última Sesión</h3>
+                    <p>Registros detallados de asistencia incluyendo tiempos de conexión.</p>
+                    <button onclick="viewAttendance()">Ver Asistencia</button>
+                </div>
+                <div class="content-card fade-in" id="attendance-report" style="display: none;">
+                    <h3><span class="sidebar-icon">👥</span> Lista de Asistencia</h3>
+                    <div id="attendance-list">
+                        <!-- La lista de asistencia se generará dinámicamente -->
+                    </div>
+                </div>
+                <div id="html-report-container" style="display: none;">
+                    <!-- Aquí se mostrará el reporte HTML generado -->
+                </div>
+            </div>
+        </div>
+    </div>
 
-      const userId = data.user?.id;
-      if(userId){
-        await supa.from('profiles').insert({ id: userId, name });
-      }
-      out.textContent = "Registro OK (si tu proyecto requiere confirmación, revisa tu correo).";
-      show('whoami', true);
-      setText('whoami', `Autenticado: ${email}`);
-    }
+    <div id="spectator-join" class="container" style="display: none;">
+        <div class="spectator-input-card fade-in">
+            <h2>Unirse a una Presentación</h2>
+            <p>Escanee el código QR o ingrese el ID de sesión para unirse.</p>
+            <label for="session-id">ID de Sesión:</label>
+            <input type="text" id="session-id-input" placeholder="ej. AULAPUDU-12345" required>
+            <label for="spectator-name">Tu Nombre:</label>
+            <input type="text" id="spectator-name" placeholder="Ingresa tu nombre" required>
+            <button onclick="event.preventDefault(); joinSession()">Unirse a la Sesión</button>
+        </div>
+    </div>
 
-    async function login(){
-      const email = $('email').value.trim();
-      const password = $('password').value;
-      const out = $('authMsg');
+    <div id="spectator-interface" class="container" style="display: none;">
+        <div class="spectator-interface">
+            <h2>Presentación en Vivo: <span id="spectator-presentation-title">Introducción a la Ciencia de Datos</span></h2>
+            <div class="spectator-presentation-area">
+                <div class="slide-container">
+                    <div id="current-slide-content">
+                        <h3>Bienvenido a la Presentación</h3>
+                        <p>La presentación comenzará shortly...</p>
+                    </div>
+                    <div class="slide-nav">
+                        <button onclick="sendReaction('prev')">Anterior</button>
+                        <div class="slide-counter">Diapositiva <span id="spectator-slide-number">1</span> de <span id="spectator-total-slides">10</span></div>
+                        <button onclick="sendReaction('next')">Siguiente</button>
+                    </div>
+                </div>
+            </div>
+            <div class="spectator-interactions">
+                <button title="¡Me encanta!" onclick="sendReaction('love')">❤️</button>
+                <button title="¡Aplaudir!" onclick="sendReaction('clap')">👏</button>
+                <button title="Pregunta" onclick="sendReaction('question')">❓</button>
+                <button title="Pulgar Arriba" onclick="sendReaction('thumbsup')">👍</button>
+                <button title="Pulgar Abajo" onclick="sendReaction('thumbsdown')">👎</button>
+            </div>
+            <div class="spectator-input-card" style="margin-top: 30px;">
+                <h3>Contenido Interactivo</h3>
+                <p>Participa en encuestas, responde preguntas o sube archivos.</p>
+                <button onclick="answerQuestion()">Responder Pregunta</button>
+                <button style="margin-top: 10px;">Subir Archivo al Presentador</button>
+                <button style="margin-top: 10px;">Descargar Material de Estudio</button>
+            </div>
+        </div>
+    </div>
 
-      const { data, error } = await supa.auth.signInWithPassword({ email, password });
-      out.textContent = error ? ("Login falló: " + error.message) : "Login OK.";
-      if(!error){
-        show('whoami', true);
-        setText('whoami', `Autenticado: ${email}`);
-      }
-    }
+    <script>
+        // ======= CONFIGURACIÓN SUPABASE =======
+        // Reemplaza con los valores reales desde Supabase → Settings → API
+        const SUPABASE_URL = "https://kcmxanjadpriphneygtx.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbXhhbmphZHByaXBobmV5Z3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTU0ODMsImV4cCI6MjA3Mjg3MTQ4M30.J9tJn1pjdUHlFfTPpqWslWLs16CTs22IZiEgCjOMbGY";
+        const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function logout(){
-      await supa.auth.signOut();
-      setText('authMsg', "Sesión cerrada.");
-      show('whoami', false);
-      setText('whoami', "");
-    }
+        // ======= ESTADO LOCAL DE UI =======
+        let currentSessionId = 'AULAPUDU-12345'; // seguimos mostrando algo por defecto
+        let currentUser = null;
+        let currentPresentation = null;
+        let currentSlide = 1;
+        let totalSlides = 10;
+        let questionType = 'multiple-choice';
+        let reactionCounts = { 'love':0,'clap':0,'question':0,'thumbsup':0,'thumbsdown':0 };
+        let timerInterval = null;
+        let timerSeconds = 0;
 
-    // ===== 2) CREAR SESIÓN =====
-    async function createSession(){
-      const msg = $('sessionCode');
-      const qr = $('qr');
-      const { data: u } = await supa.auth.getUser();
-      if(!u?.user){ msg.textContent = "Primero inicia sesión."; qr.removeAttribute('src'); return; }
+        // ======= NAVEGACIÓN ENTRE VISTAS =======
+        function showPage(pageId) {
+            document.querySelectorAll('.container, .presenter-dashboard').forEach(page => page.style.display = 'none');
+            document.getElementById(pageId).style.display = (pageId === 'presenter-dashboard' ? 'flex' : 'flex');
+            if (pageId === 'presenter-dashboard') showPresenterContent('overview');
+            if (pageId === 'presenter-dashboard' && document.getElementById('presenter-reports-content').style.display !== 'none') {
+                updateAttendanceReport();
+            }
+        }
 
-      const code = 'AULAPUDU-' + Math.floor(10000 + Math.random()*90000);
+        function toggleAuthForm() {
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const authTitle = document.getElementById('auth-title');
+            const loginVisible = loginForm.style.display !== 'none';
+            loginForm.style.display = loginVisible ? 'none' : 'block';
+            registerForm.style.display = loginVisible ? 'block' : 'none';
+            authTitle.innerText = loginVisible ? 'Registro de Presentador' : 'Inicio de Presentador';
+        }
 
-      const { error } = await supa.from('sessions').insert({
-        session_code: code,
-        presenter_id: u.user.id,
-        title: 'Sesión en vivo'
-      });
+        function showPresenterContent(contentId) {
+            document.querySelectorAll('#presenter-dashboard .main-content > div').forEach(section => section.style.display = 'none');
+            document.getElementById('presenter-' + contentId + '-content').style.display = 'block';
+            document.querySelectorAll('.sidebar ul li a').forEach(link => link.classList.remove('active'));
+            const activeLink = document.querySelector(`.sidebar ul li a[onclick*="${contentId}"]`);
+            if (activeLink) activeLink.classList.add('active');
+            if (contentId === 'reports') updateAttendanceReport();
+        }
 
-      if(error){ msg.textContent = "Error: " + error.message; qr.removeAttribute('src'); return; }
+        // ======= AUTH (SUPABASE) =======
+        async function authenticateUser() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const { data, error } = await supa.auth.signInWithPassword({ email, password });
+            if (error) { alert('Credenciales incorrectas: ' + error.message); return; }
+            currentUser = data.user;
+            showPage('presenter-dashboard');
+        }
 
-      msg.textContent = code;
-      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(code)}`;
-    }
+        async function registerUser() {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            if (password !== confirmPassword) { alert('Las contraseñas no coinciden.'); return; }
 
-    // ===== 3) UNIRSE (ASISTENCIA) =====
-    async function joinSession(){
-      const sessionCode = $('joinCode').value.trim();
-      const spectatorName = $('spectatorName').value.trim();
-      const out = $('joinMsg');
+            const { data, error } = await supa.auth.signUp({ email, password });
+            if (error) { alert('No se pudo registrar: ' + error.message); return; }
+            const userId = data.user?.id;
+            if (userId) { await supa.from('profiles').insert({ id: userId, name }); }
+            alert('Registro exitoso. Ahora puedes iniciar sesión.');
+            toggleAuthForm();
+        }
 
-      if(!sessionCode || !spectatorName){
-        out.textContent = "Falta el código o tu nombre.";
-        return;
-      }
+        async function logout() {
+            await supa.auth.signOut();
+            currentUser = null;
+            showPage('welcome');
+        }
 
-      // Buscar sesión por código
-      const { data: sess, error: e1 } = await supa.from('sessions')
-        .select('id, session_code, active')
-        .eq('session_code', sessionCode)
-        .single();
+        // ======= SESIONES (SUPABASE) =======
+        async function generateNewSession() {
+            const { data: u } = await supa.auth.getUser();
+            if (!u?.user) { alert('Primero inicia sesión.'); return; }
+            const code = 'AULAPUDU-' + Math.floor(10000 + Math.random() * 90000);
 
-      if(e1 || !sess){ out.textContent = "Sesión no encontrada."; return; }
-      if(sess.active === false){ out.textContent = "La sesión no está activa."; return; }
+            const { error } = await supa.from('sessions').insert({
+                session_code: code,
+                presenter_id: u.user.id,
+                title: 'Sesión en vivo'
+            });
+            if (error) { alert('Error creando sesión: ' + error.message); return; }
 
-      // Insertar asistencia
-      const { error: e2 } = await supa.from('attendance').insert({
-        session_id: sess.id, spectator_name: spectatorName
-      });
+            currentSessionId = code;
+            document.getElementById('session-id-display').textContent = code;
+            document.getElementById('qr-code-img').src =
+              `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(code)}`;
+            alert(`Nueva sesión creada: ${code}`);
+        }
 
-      out.textContent = e2 ? ("No se pudo registrar asistencia: " + e2.message) : "¡Asistencia registrada!";
-    }
+        // ======= ASISTENCIA (SUPABASE) =======
+        async function joinSession() {
+            const sessionCode = document.getElementById('session-id-input').value.trim();
+            const spectatorName = document.getElementById('spectator-name').value.trim();
+            if (!sessionCode || !spectatorName) { alert('Ingresa el ID de sesión y tu nombre.'); return; }
 
-    // ===== 4) LISTAR ASISTENCIA =====
-    async function loadAttendance(){
-      const code = $('codeForList').value.trim();
-      const list = $('attList');
-      const info = $('attInfo');
-      list.innerHTML = "";
-      info.textContent = "";
+            const { data: sess, error: e1 } = await supa.from('sessions')
+                .select('id, session_code, active').eq('session_code', sessionCode).single();
+            if (e1 || !sess) { alert('Sesión no encontrada.'); return; }
+            if (sess.active === false) { alert('La sesión no está activa.'); return; }
 
-      if(!code){ info.textContent = "Ingresa un código."; return; }
+            const { error: e2 } = await supa.from('attendance').insert({
+                session_id: sess.id,
+                spectator_name: spectatorName
+            });
+            if (e2) { alert('No se pudo registrar asistencia: ' + e2.message); return; }
 
-      // obtener id de sesión
-      const { data: sess, error: e1 } = await supa.from('sessions')
-        .select('id, session_code, title, created_at')
-        .eq('session_code', code).single();
-      if(e1 || !sess){ info.textContent = "Sesión no encontrada."; return; }
+            currentSessionId = sess.session_code;
+            showPage('spectator-interface');
+        }
 
-      info.innerHTML = `Sesión <span class="mono">${sess.session_code}</span> — creada el ${new Date(sess.created_at).toLocaleString()}`;
+        async function updateAttendanceReport() {
+            const attendanceList = document.getElementById('attendance-list');
+            attendanceList.innerHTML = '';
 
-      const { data: rows, error: e2 } = await supa.from('attendance')
-        .select('spectator_name, joined_at')
-        .eq('session_id', sess.id)
-        .order('joined_at', { ascending: false });
+            // buscar sesión por el código que se ve en el dashboard
+            const code = document.getElementById('session-id-display')?.textContent || currentSessionId;
+            if (!code) { attendanceList.innerHTML = '<p>No hay sesión seleccionada.</p>'; return; }
 
-      if(e2){ info.textContent = "Error obteniendo asistencia: " + e2.message; return; }
+            const { data: sess, error: e1 } = await supa.from('sessions')
+                .select('id, session_code').eq('session_code', code).single();
+            if (e1 || !sess) { attendanceList.innerHTML = '<p>Sesión no encontrada.</p>'; return; }
 
-      if(!rows || rows.length === 0){
-        list.innerHTML = '<div class="muted">No hay registros para esta sesión.</div>';
-        return;
-      }
+            const { data: rows, error: e2 } = await supa.from('attendance')
+                .select('spectator_name, joined_at').eq('session_id', sess.id)
+                .order('joined_at', { ascending: false });
+            if (e2) { attendanceList.innerHTML = '<p>Error obteniendo asistencia.</p>'; return; }
 
-      rows.forEach(r => {
-        const box = document.createElement('div');
-        box.className = 'item';
-        const left = document.createElement('div');
-        left.textContent = r.spectator_name;
-        const right = document.createElement('div');
-        right.className = 'muted';
-        right.textContent = new Date(r.joined_at).toLocaleString();
-        box.appendChild(left);
-        box.appendChild(right);
-        list.appendChild(box);
-      });
-    }
-  </script>
+            if (!rows || rows.length === 0) {
+                attendanceList.innerHTML = '<p>No hay registros de asistencia para esta sesión.</p>';
+                return;
+            }
+
+            rows.forEach(record => {
+                const item = document.createElement('div');
+                item.style.padding = '10px';
+                item.style.borderBottom = '1px solid #eee';
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = record.spectator_name;
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = new Date(record.joined_at).toLocaleString();
+                timeSpan.style.color = 'var(--text-medium)';
+
+                item.appendChild(nameSpan);
+                item.appendChild(timeSpan);
+                attendanceList.appendChild(item);
+            });
+        }
+
+        // ======= PRESENTACIONES (solo UI local) =======
+        function loadPresentation(title) {
+            currentPresentation = title;
+            currentSlide = 1;
+            document.getElementById('current-presentation-title').textContent = title;
+            document.getElementById('current-presentation-text').textContent = `Presentación activa: ${title}`;
+            document.getElementById('current-slide').textContent = currentSlide;
+            document.getElementById('total-slides').textContent = totalSlides;
+            document.getElementById('spectator-presentation-title').textContent = title;
+            document.getElementById('spectator-slide-number').textContent = currentSlide;
+            document.getElementById('spectator-total-slides').textContent = totalSlides;
+            alert(`Presentación "${title}" cargada exitosamente.`);
+            showPresenterContent('live-session');
+        }
+
+        function uploadPresentation() {
+            const fileInput = document.getElementById('presentation-upload');
+            const file = fileInput.files[0];
+            if (!file) { alert('Selecciona un archivo.'); return; }
+            alert(`Presentación "${file.name}" subida (demo).`);
+            const list = document.getElementById('presentations-list');
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${file.name}</span><div><button onclick="loadPresentation('${file.name.replace(/'/g, "\\'")}')">Cargar</button><button class="red">Eliminar</button></div>`;
+            list.appendChild(li);
+            fileInput.value='';
+        }
+
+        function uploadMaterial() {
+            const fileInput = document.getElementById('material-upload');
+            const file = fileInput.files[0];
+            if (!file) { alert('Selecciona un archivo.'); return; }
+            alert(`Material "${file.name}" subido (demo).`);
+            const list = document.getElementById('materials-list');
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${file.name}</span><button>Descargar</button>`;
+            list.appendChild(li);
+            fileInput.value='';
+        }
+
+        // ======= SLIDES =======
+        function nextSlide(){ if (currentSlide < totalSlides) { currentSlide++; updateSlide(); } }
+        function prevSlide(){ if (currentSlide > 1) { currentSlide--; updateSlide(); } }
+        function updateSlide() {
+            document.getElementById('current-slide').textContent = currentSlide;
+            document.getElementById('spectator-slide-number').textContent = currentSlide;
+            document.getElementById('current-slide-content').innerHTML = `<h3>Diapositiva ${currentSlide}</h3><p>Contenido de la diapositiva ${currentSlide}</p>`;
+        }
+
+        // ======= PREGUNTAS (UI local; puedes conectar a Supabase igual que asistencia) =======
+        function setQuestionType(type) {
+            questionType = type;
+            document.querySelectorAll('.question-type-selector button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            const optionsContainer = document.getElementById('options-container');
+            if (type === 'open-ended') {
+                optionsContainer.innerHTML = '';
+                optionsContainer.style.display = 'none';
+            } else {
+                optionsContainer.style.display = 'flex';
+                if (type === 'true-false') {
+                    optionsContainer.innerHTML = `
+                        <div class="option-input"><input type="text" value="Verdadero" readonly></div>
+                        <div class="option-input"><input type="text" value="Falso" readonly></div>`;
+                } else {
+                    optionsContainer.innerHTML = `
+                        <div class="option-input">
+                          <input type="text" placeholder="Opción 1">
+                          <button class="red" onclick="removeOption(this)">✕</button>
+                        </div>
+                        <div class="option-input">
+                          <input type="text" placeholder="Opción 2">
+                          <button class="red" onclick="removeOption(this)">✕</button>
+                        </div>`;
+                }
+            }
+        }
+        function addOption(){
+            const c = document.getElementById('options-container');
+            const n = c.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'option-input';
+            div.innerHTML = `<input type="text" placeholder="Opción ${n}"><button class="red" onclick="removeOption(this)">✕</button>`;
+            c.appendChild(div);
+        }
+        function removeOption(btn){
+            const c = document.getElementById('options-container');
+            if (c.children.length > 2) btn.parentElement.remove();
+            else alert('Debe haber al menos dos opciones.');
+        }
+        async function saveQuestion(){
+            const title = document.getElementById('question-title').value.trim();
+            if (!title) { alert('Ingresa una pregunta.'); return; }
+            const { data: u } = await supa.auth.getUser();
+            let options = null;
+            if (questionType !== 'open-ended'){
+                options = [];
+                document.querySelectorAll('#options-container input').forEach(i => { if (i.value.trim()) options.push(i.value.trim()); });
+                if (options.length < 2){ alert('Al menos dos opciones.'); return; }
+            }
+            // Busca sesión actual por código
+            const code = document.getElementById('session-id-display')?.textContent || currentSessionId;
+            const { data: sess } = await supa.from('sessions').select('id').eq('session_code', code).single();
+            const { error } = await supa.from('questions').insert({
+                session_id: sess?.id || null,
+                title,
+                qtype: questionType,
+                options,
+                created_by: u?.user?.id || null
+            });
+            if (error){ alert('No se pudo guardar: ' + error.message); return; }
+            alert('Pregunta guardada.');
+            document.getElementById('question-title').value = '';
+        }
+
+        function useQuestion(){ alert('Mostrar pregunta (demo).'); }
+        function useQuestionWithTimer(){ alert('Mostrar con timer (demo).'); }
+        function deleteQuestion(){ alert('Eliminar pregunta (demo).'); }
+
+        // ======= REACCIONES (UI local; puedes persistir en Supabase igual que asistencia) =======
+        function sendReaction(reaction) {
+            const button = event.target;
+            button.classList.add('reaction-active');
+            setTimeout(() => button.classList.remove('reaction-active'), 1000);
+            if (reactionCounts.hasOwnProperty(reaction)) { reactionCounts[reaction]++; updateReactionCounts(); }
+            if (reaction === 'prev' && currentSlide > 1) { currentSlide--; updateSlide(); }
+            else if (reaction === 'next' && currentSlide < totalSlides) { currentSlide++; updateSlide(); }
+        }
+        function updateReactionCounts(){
+            for (const [k,v] of Object.entries(reactionCounts)) {
+                const el = document.getElementById(`count-${k}`);
+                if (el) el.textContent = v;
+            }
+        }
+
+        // ======= FINALIZAR SESIÓN / TIMER =======
+        function endSession(){
+            if (confirm('¿Finalizar la sesión?')) {
+                currentPresentation = null; currentSlide = 1;
+                showPresenterContent('overview'); alert('Sesión finalizada.');
+            }
+        }
+        function startTimer(){
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(()=>{ timerSeconds++; updateTimerDisplay(); },1000);
+        }
+        function resetTimer(){ if (timerInterval) clearInterval(timerInterval); timerSeconds = 0; updateTimerDisplay(); }
+        function updateTimerDisplay(){
+            const m = Math.floor(timerSeconds/60), s = timerSeconds%60;
+            document.getElementById('timer-display').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        // ======= REPORTES (UI local) =======
+        function generateHTMLReport(){
+            const c = document.getElementById('html-report-container');
+            c.style.display='block';
+            c.innerHTML = `
+              <div class="report-container">
+                <div class="report-header">
+                  <h3>Reporte de Resultados - Introducción a la IA</h3>
+                  <p>Generado el: ${new Date().toLocaleDateString()}</p>
+                </div>
+                <div class="report-content">
+                  <h4>Resumen de Participación</h4>
+                  <p>Total de participantes: 25</p>
+                  <p>Tasa de finalización: 92%</p>
+                  <h4>Resultados por Pregunta</h4>
+                  <table class="report-table">
+                    <thead><tr><th>Pregunta</th><th>Respuesta Correcta</th><th>% de Aciertos</th></tr></thead>
+                    <tbody>
+                      <tr><td>¿Qué es la Inteligencia Artificial?</td><td>Simulación de procesos de inteligencia humana por máquinas</td><td>84%</td></tr>
+                      <tr><td>¿Cuál de estos es un algoritmo de aprendizaje supervisado?</td><td>Regresión lineal</td><td>76%</td></tr>
+                      <tr><td>Verdadero o Falso: El NLP es una rama de la IA</td><td>Verdadero</td><td>92%</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="report-actions">
+                  <button onclick="printReport()">Imprimir Reporte</button>
+                  <button onclick="downloadReport()">Descargar como HTML</button>
+                </div>
+              </div>`;
+        }
+        function printReport(){ window.print(); }
+        function downloadReport(){
+            const html = document.getElementById('html-report-container').innerHTML;
+            const blob = new Blob([html], { type:'text/html' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'reporte-resultados.html'; a.click();
+        }
+
+        // ======= INIT =======
+        document.addEventListener('DOMContentLoaded', async () => {
+            showPage('welcome');
+            // Mostrar si ya hay sesión Auth activa
+            const { data } = await supa.auth.getUser();
+            if (data?.user) { currentUser = data.user; }
+        });
+    </script>
 </body>
 </html>
