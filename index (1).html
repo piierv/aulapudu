@@ -646,23 +646,57 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const { data, error } = await supa.auth.signInWithPassword({ email, password });
-            if (error) return alert('Credenciales incorrectas: ' + error.message);
+            if (error){
+                console.error('[signIn]', error);
+                const msg = /email.*confirm/i.test(error.message)
+                    ? 'Tu email no está confirmado aún. Revisa tu bandeja.'
+                    : 'Credenciales incorrectas: ' + error.message;
+                return alert(msg);
+            }
             currentUser = data.user;
             showPage('presenter-dashboard');
         }
+
         async function registerUser(){
             const name = document.getElementById('reg-name').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value;
             const confirm = document.getElementById('confirm-password').value;
+
             if (password !== confirm) return alert('Las contraseñas no coinciden.');
-            const { data, error } = await supa.auth.signUp({ email, password });
-            if (error) return alert('No se pudo registrar: ' + error.message);
-            if (data.user?.id) await supa.from('profiles').insert({ id: data.user.id, name });
-            alert('Registro exitoso. Ahora puedes iniciar sesión.');
+            if (!name || !email || !password) return alert('Completa todos los campos.');
+
+            const { data, error } = await supa.auth.signUp({
+                email, password, options: { data: { name } }
+            });
+            if (error){
+                console.error('[signUp]', error);
+                return alert(
+                    /email.*confirm/i.test(error.message)
+                        ? 'Debes confirmar tu correo antes de iniciar sesión.'
+                        : 'No se pudo registrar: ' + error.message
+                );
+            }
+
+            const userId = data.user?.id;
+            if (userId){
+                // Upsert evita fallo si el perfil ya existía
+                const { error: upErr } = await supa
+                    .from('profiles')
+                    .upsert({ id: userId, name }, { onConflict: 'id' });
+                if (upErr) console.warn('[profiles upsert]', upErr);
+            }
+
+            alert('Registro exitoso. Revisa tu correo si tu proyecto exige confirmación y luego inicia sesión.');
             toggleAuthForm();
         }
-        async function logout(){ await supa.auth.signOut(); currentUser = null; await cleanupRealtime(); showPage('welcome'); }
+
+        async function logout(){
+            await supa.auth.signOut();
+            currentUser = null;
+            await cleanupRealtime();
+            showPage('welcome');
+        }
 
         // ========= SESIONES =========
         async function generateNewSession(){
