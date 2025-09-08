@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- pdf.js (para PDF en vivo) -->
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
     <script>
-  // pdf.js worker (requerido)
+      // pdf.js worker (requerido)
+      if (window.pdfjsLib) {
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+      }
     </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AulaPudú - Plataforma Interactiva de Presentaciones</title>
@@ -28,72 +32,27 @@
             --shadow-hover: rgba(0, 0, 0, 0.12);
             --reaction-active: #A7C7E7;
         }
-
-        * {
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-        }
-
+        * { box-sizing: border-box; transition: all 0.3s ease; }
         body {
-            font-family: 'Nunito', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--light-blue);
-            color: var(--text-dark);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            line-height: 1.6;
+            font-family: 'Nunito', sans-serif; margin: 0; padding: 0;
+            background-color: var(--light-blue); color: var(--text-dark);
+            display: flex; flex-direction: column; min-height: 100vh; line-height: 1.6;
         }
-
         /* Encabezado mejorado */
         header {
-            background-color: var(--white);
-            padding: 15px 30px;
-            box-shadow: 0 2px 15px var(--shadow);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 0 0 15px 15px;
+            background-color: var(--white); padding: 15px 30px; box-shadow: 0 2px 15px var(--shadow);
+            display: flex; justify-content: space-between; align-items: center; border-radius: 0 0 15px 15px;
         }
-
-        header .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        header .logo { display: flex; align-items: center; gap: 12px; }
         header .logo-icon {
-            width: 45px;
-            height: 45px;
-            background-color: var(--primary-blue);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            box-shadow: 0 4px 8px var(--shadow);
+            width: 45px; height: 45px; background-color: var(--primary-blue); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; box-shadow: 0 4px 8px var(--shadow);
         }
-
-        header .logo h1 {
-            margin: 0;
-            color: var(--text-dark);
-            font-size: 26px;
-            font-weight: 700;
-        }
-
+        header .logo h1 { margin: 0; color: var(--text-dark); font-size: 26px; font-weight: 700; }
         nav button {
-            background-color: var(--primary-blue);
-            color: var(--white);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
+            background-color: var(--primary-blue); color: var(--white); border: none; padding: 12px 24px;
+            border-radius: 50px; cursor: pointer; font-size: 16px; font-weight: 600;
         }
-
         nav button:hover { transform: translateY(-3px); box-shadow: 0 6px 12px var(--shadow-hover); }
 
         /* Contenedor principal */
@@ -101,13 +60,8 @@
 
         /* Tarjetas */
         .card {
-            background-color: var(--white);
-            border-radius: 20px;
-            box-shadow: 0 8px 20px var(--shadow);
-            padding: 40px;
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
+            background-color: var(--white); border-radius: 20px; box-shadow: 0 8px 20px var(--shadow);
+            padding: 40px; width: 100%; max-width: 500px; text-align: center;
         }
         .card h2 { color: var(--text-dark); margin-bottom: 25px; font-size: 28px; font-weight: 700; }
         .card p { color: var(--text-medium); margin-bottom: 25px; }
@@ -221,6 +175,7 @@
         .option-input input { flex: 1; }
         .add-option { background-color: var(--light-green); color: var(--text-dark); border: none; padding: 8px 15px; border-radius: 50px; cursor: pointer; font-weight: 600; align-self: flex-start; }
         .question-preview { background-color: var(--light-blue); border-radius: 10px; padding: 15px; margin-top: 20px; }
+
         .question-type-selector { display: flex; gap: 15px; margin-bottom: 15px; }
         .question-type-selector button { background-color: var(--light-blue); color: var(--text-dark); border: none; padding: 10px 15px; border-radius: 50px; cursor: pointer; font-weight: 600; }
         .question-type-selector button.active { background-color: var(--primary-blue); color: var(--white); }
@@ -588,7 +543,7 @@
                 <button title="Pulgar Arriba" onclick="sendReaction('thumbsup')">👍</button>
                 <button title="Pulgar Abajo" onclick="sendReaction('thumbsdown')">👎</button>
             </div>
-            <div class="spectator-input-card" style="margin-top: 30px;">
+            <div class="spectator-input-card" style="margin-top: 30px%;">
                 <h3>Contenido Interactivo</h3>
                 <p>Participa en encuestas, responde preguntas o sube archivos.</p>
                 <button onclick="answerQuestion()">Responder Pregunta</button>
@@ -685,7 +640,6 @@
 
             const userId = data.user?.id;
             if (userId){
-                // Upsert evita fallo si el perfil ya existía
                 const { error: upErr } = await supa
                     .from('profiles')
                     .upsert({ id: userId, name }, { onConflict: 'id' });
@@ -769,7 +723,7 @@
             item.appendChild(left); item.appendChild(right); container.prepend(item);
         }
 
-        // ========= PRESENTACIONES (UI local) =========
+        // ========= PRESENTACIONES (UI local por defecto) =========
         function loadPresentation(title){
             currentPresentation = title;
             currentSlide = 1;
@@ -814,7 +768,7 @@
             rt.chan?.send({ type:'broadcast', event:'slide', payload:{ currentSlide } });
         }
 
-        // ========= PREGUNTAS (persistencia básica) =========
+        // ========= PREGUNTAS =========
         function setQuestionType(type){
             questionType = type;
             document.querySelectorAll('.question-type-selector button').forEach(b => b.classList.remove('active'));
@@ -847,20 +801,14 @@
         }
         function answerQuestion(){ alert('Funcionalidad de respuesta a preguntas (demo).'); }
 
-        // ========= REACCIONES (broadcast + BD) =========
+        // ========= REACCIONES =========
         async function sendReaction(kind){
             const btn = event.target;
             btn.classList.add('reaction-active'); setTimeout(()=>btn.classList.remove('reaction-active'), 800);
-
-            // Broadcast inmediato (todos ven al instante)
             rt.chan?.send({ type:'broadcast', event:'reaction', payload:{ kind } });
-
-            // Persistir en BD (opcional pero recomendado)
             if (rt.sessionId){
                 try { await supa.from('reactions').insert({ session_id: rt.sessionId, kind }); } catch(e){ console.warn(e); }
             }
-
-            // Navegación solicitada por espectador
             if (kind==='prev'){ rt.chan?.send({ type:'broadcast', event:'nav_request', payload:{ dir:'prev' } }); }
             if (kind==='next'){ rt.chan?.send({ type:'broadcast', event:'nav_request', payload:{ dir:'next' } }); }
         }
@@ -915,16 +863,14 @@
         // ========= REALTIME =========
         async function initRealtimeForSession(sessionCode){
             await cleanupRealtime();
-            // buscar id de sesión
             const { data: sess, error } = await supa.from('sessions').select('id, session_code').eq('session_code', sessionCode).single();
             if (error || !sess) return;
 
             rt.sessionId = sess.id;
             rt.presenceKey = Math.random().toString(36).slice(2);
-
             rt.chan = supa.channel(`session:${sessionCode}`, { config: { presence: { key: rt.presenceKey } } });
 
-            // PRESENCE: contador y lista de espectadores
+            // PRESENCE
             rt.chan.on('presence', { event:'sync' }, () => {
                 const state = rt.chan.presenceState();
                 const people = Object.values(state).flat();
@@ -934,7 +880,7 @@
                 if (list){ list.innerHTML = ''; people.forEach(p => { const li=document.createElement('li'); li.innerHTML = `<span>${p.name || 'Invitado'}</span><div><button>Ver Perfil</button><button>Mensaje</button></div>`; list.appendChild(li); }); }
             });
 
-            // INSERTS de asistencia (pinta en informes al vuelo)
+            // Attendance live
             rt.chan.on('postgres_changes',
               { event:'INSERT', schema:'public', table:'attendance', filter:`session_id=eq.${rt.sessionId}` },
               (payload) => {
@@ -942,7 +888,7 @@
                 if (list){ appendAttendanceRow(list, payload.new.spectator_name, payload.new.joined_at); }
               });
 
-            // Broadcast: cambio de diapositiva
+            // Slide sync
             rt.chan.on('broadcast', { event:'slide' }, (msg) => {
                 const n = Number(msg.payload?.currentSlide);
                 if (!Number.isNaN(n)){
@@ -950,16 +896,16 @@
                 }
             });
 
-            // Broadcast: reacciones (incrementa contadores en presentador)
+            // Reactions
             rt.chan.on('broadcast', { event:'reaction' }, (msg) => {
                 const k = msg.payload?.kind;
                 if (reactionCounts[k] !== undefined){ reactionCounts[k]++; updateReactionCounts(); }
             });
 
-            // (Opcional) peticiones de navegación desde espectadores
+            // Spectator nav requests
             rt.chan.on('broadcast', { event:'nav_request' }, (msg) => {
                 const dir = msg.payload?.dir;
-                if (!currentPresentation) return; // solo si presentador está mostrando algo
+                if (!currentPresentation) return;
                 if (dir==='prev') prevSlide();
                 if (dir==='next') nextSlide();
             });
@@ -987,40 +933,50 @@
             const { data } = await supa.auth.getUser();
             if (data?.user) currentUser = data.user;
         });
-        
     </script>
+
+    <!-- ======= AÑADIDOS PARA PDF/PPTX EN VIVO, SIN ROMPER TU DISEÑO ======= -->
     <script>
-// ====== AÑADIDOS PARA PRESENTAR PDF/PPTX EN VIVO ======
 const STORAGE_BUCKET = 'presentations';
 let pdfDoc = null;
 let pdfUrl = null;
 
-// Utilidad: subir archivo a Storage y devolver URL pública
+// Subir a Storage y devolver URL pública
 async function uploadToStorage(file) {
   const ext = file.name.split('.').pop().toLowerCase();
   const ts = Date.now();
-  const path = `${currentSessionCode}/${ts}-${file.name}`;
-  const { error: upErr } = await supa.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
-  if (upErr) throw upErr;
+  const safeName = file.name.replace(/[^\w.\- ]+/g, '_');
+  const path = `${currentSessionCode}/${ts}-${safeName}`;
+  try {
+    const { error: upErr } = await supa.storage.from(STORAGE_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) throw upErr;
+  } catch (err) {
+    const msg = (err && err.message) ? err.message : String(err);
+    if (/Bucket.*not.*found/i.test(msg)) {
+      alert('Error al subir la presentación: Bucket "presentations" no existe.\n\nSolución rápida:\n1) En tu proyecto Supabase → Storage → Create bucket\n2) Nombre: presentations\n3) Marcar como Public\n\nLuego vuelve a intentar.');
+      throw err;
+    }
+    alert('Error al subir la presentación: ' + msg);
+    throw err;
+  }
   const { data: pub } = supa.storage.from(STORAGE_BUCKET).getPublicUrl(path);
   return { url: pub.publicUrl, ext };
 }
 
-// Utilidad: construir URL del visor de Office para PPTX
+// Visor Office para PPT/PPTX
 function officeViewerUrl(publicUrl) {
   const src = encodeURIComponent(publicUrl);
   return `https://view.officeapps.live.com/op/embed.aspx?src=${src}`;
 }
 
-// Render de una página PDF en el contenedor actual (presentador y espectador)
+// Render de una página PDF
 async function renderPdfPage(pageNumber) {
   if (!pdfDoc) return;
   const page = await pdfDoc.getPage(pageNumber);
   const viewport = page.getViewport({ scale: 1.5 });
 
-  // Prepara el contenedor
   const container = document.getElementById('current-slide-content');
-  container.innerHTML = ''; // no cambia estilos globales
+  container.innerHTML = '';
   const canvas = document.createElement('canvas');
   canvas.id = 'pdf-canvas';
   canvas.style.maxWidth = '100%';
@@ -1033,7 +989,7 @@ async function renderPdfPage(pageNumber) {
 
   await page.render({ canvasContext: ctx, viewport }).promise;
 
-  // También pinta en la vista del espectador si existe esa área
+  // Espectador
   const specContainer = document.querySelector('#spectator-interface #current-slide-content');
   if (specContainer) {
     specContainer.innerHTML = '';
@@ -1042,7 +998,7 @@ async function renderPdfPage(pageNumber) {
   }
 }
 
-// Abrir un PDF (descarga y prepara pdf.js)
+// Abrir PDF
 async function openPdf(url) {
   pdfUrl = url;
   const loadingTask = pdfjsLib.getDocument(pdfUrl);
@@ -1055,7 +1011,7 @@ async function openPdf(url) {
   await renderPdfPage(currentSlide);
 }
 
-// Mostrar un PPTX dentro de un iframe (sincronía de navegación no disponible)
+// Abrir PPT/PPTX en iframe
 function openPptx(viewUrl) {
   const container = document.getElementById('current-slide-content');
   container.innerHTML = '';
@@ -1067,7 +1023,6 @@ function openPptx(viewUrl) {
   iframe.style.border = '0';
   container.appendChild(iframe);
 
-  // En espectador
   const specContainer = document.querySelector('#spectator-interface #current-slide-content');
   if (specContainer) {
     specContainer.innerHTML = '';
@@ -1078,16 +1033,14 @@ function openPptx(viewUrl) {
     iframe2.style.border = '0';
     specContainer.appendChild(iframe2);
   }
-
-  // Para PPTX no hay "totalSlides" expuesto; dejamos contadores como estaban
 }
 
-// Broadcast del estado de presentación para que todos carguen el mismo archivo
+// Broadcast estado de presentación
 function broadcastPresentation(payload) {
   rt.chan?.send({ type: 'broadcast', event: 'presentation', payload });
 }
 
-// ====== OVERRIDE SUAVE: Subir presentación (usa Storage) ======
+// ====== OVERRIDE: Subir (usa Storage) ======
 async function uploadPresentation(){
   const input = document.getElementById('presentation-upload');
   const file = input.files[0];
@@ -1097,7 +1050,6 @@ async function uploadPresentation(){
     const { url, ext } = await uploadToStorage(file);
 
     if (ext === 'pdf') {
-      // Carga PDF y sincroniza
       await openPdf(url);
       document.getElementById('current-presentation-title').textContent = file.name;
       document.getElementById('current-presentation-text').textContent = `Presentación activa: ${file.name}`;
@@ -1108,14 +1060,14 @@ async function uploadPresentation(){
       openPptx(viewUrl);
       document.getElementById('current-presentation-title').textContent = file.name;
       document.getElementById('current-presentation-text').textContent = `Presentación activa: ${file.name}`;
-      // En PPTX no podemos sincronizar botones; ambos verán el mismo archivo en tiempo real
       broadcastPresentation({ type: 'pptx', url: viewUrl, name: file.name });
-      alert(`Presentación "${file.name}" subida y cargada (PPTX). Nota: la navegación del visor no se puede sincronizar programáticamente.`);
+      alert(`Presentación "${file.name}" subida y cargada (PPT/PPTX). Nota: el visor de Office no expone eventos de navegación.`);
     } else {
-      alert('Formato no soportado para visualizar en vivo. Usa PDF o PPTX.');
+      alert('Formato no soportado para visualizar en vivo. Usa PDF o PPT/PPTX.');
+      return;
     }
 
-    // Mantén tu lista visual existente
+    // Añadir a la lista existente
     const ul = document.getElementById('presentations-list');
     const li = document.createElement('li');
     li.innerHTML = `<span>${file.name}</span>
@@ -1126,16 +1078,14 @@ async function uploadPresentation(){
     ul.appendChild(li);
     input.value = '';
 
-    // Ir directo a sesión en vivo
     showPresenterContent('live-session');
   } catch (e) {
     console.error(e);
-    alert('Error al subir la presentación: ' + (e?.message || e));
+    // Mensaje ya mostrado en uploadToStorage si es bucket not found
   }
 }
 
-// ====== OVERRIDE SUAVE: Cargar una presentación ya subida ======
-// name: nombre lógico, ext: 'pdf'|'pptx'|'ppt', url: URL pública (para pdf o pptx)
+// ====== OVERRIDE: Cargar ya subida ======
 async function loadPresentation(name, ext = null, url = null){
   currentPresentation = name || 'Presentación';
   currentSlide = 1;
@@ -1154,7 +1104,6 @@ async function loadPresentation(name, ext = null, url = null){
       broadcastPresentation({ type: 'pptx', url: viewUrl, name: currentPresentation });
     }
   } else {
-    // Modo demo anterior: solo texto
     totalSlides = 10;
     document.getElementById('total-slides').textContent = totalSlides;
     document.getElementById('spectator-presentation-title').textContent = currentPresentation;
@@ -1165,38 +1114,26 @@ async function loadPresentation(name, ext = null, url = null){
   showPresenterContent('live-session');
 }
 
-// ====== Sincronía de diapositivas para PDF (reutiliza tus botones) ======
+// ====== Sincronía de diapositivas PDF con tus botones ======
 const _origUpdateSlide = updateSlide;
 updateSlide = async function (){
-  // Si hay PDF cargado, renderiza página real
   if (pdfDoc && pdfUrl) {
     await renderPdfPage(currentSlide);
     document.getElementById('current-slide').textContent = currentSlide;
     const specNum = document.getElementById('spectator-slide-number');
     if (specNum) specNum.textContent = currentSlide;
   } else {
-    // Fallback a tu contenido demo
     _origUpdateSlide();
   }
 };
 
-// Ya tienes broadcastSlide() que envía {currentSlide}; no lo tocamos.
-
-// ====== Escucha nuevos eventos de presentación en todos los clientes ======
-(function patchRealtimePresentationListener() {
-  if (!rt) return; // se rehará en initRealtimeForSession
-})();
-
-// Extendemos tu initRealtimeForSession para escuchar 'presentation'
+// Listener de presentación en Realtime (se añade tras initRealtimeForSession)
 const _origInitRealtimeForSession = initRealtimeForSession;
 initRealtimeForSession = async function(sessionCode){
   await _origInitRealtimeForSession(sessionCode);
-
-  // Añadimos el listener de 'presentation' UNA sola vez por canal
   if (rt?.chan) {
     rt.chan.on('broadcast', { event:'presentation' }, async (msg) => {
       const payload = msg.payload || {};
-      // Carga la misma presentación en todos
       if (payload.type === 'pdf' && payload.url) {
         await openPdf(payload.url);
         if (typeof payload.totalSlides === 'number') {
@@ -1214,7 +1151,7 @@ initRealtimeForSession = async function(sessionCode){
   }
 };
 
-// Ajusta los botones next/prev para PDF (ya usan updateSlide + broadcast)
+// Botones next/prev: si hay PDF, usan render real y broadcast
 const _origNext = nextSlide;
 nextSlide = function(){
   if (pdfDoc && currentSlide < totalSlides) {
@@ -1235,7 +1172,6 @@ prevSlide = function(){
     _origPrev();
   }
 };
-</script>
-
+    </script>
 </body>
 </html>
