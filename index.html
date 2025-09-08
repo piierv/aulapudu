@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AulaPudú - Plataforma Interactiva de Presentaciones</title>
@@ -1920,5 +1921,16 @@
             }
         });
     </script>
+    <script>
+  const SUPABASE_URL = "https://TU-PROYECTO.supabase.co"; // ← pega tu URL
+  const SUPABASE_ANON_KEY = "eyJ...";                      // ← pega tu anon key
+  const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+    <script>
+  const SUPABASE_URL = "https://TU-PROYECTO.supabase.co"; // ← pega tu URL
+  const SUPABASE_ANON_KEY = "eyJ...";                      // ← pega tu anon key
+  const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
 </body>
 </html>
