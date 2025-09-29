@@ -988,7 +988,7 @@ button.red:hover { background-color: #c9302c; }
     // **NOTA IMPORTANTE:** Si experimentas el error "API Key Inválida" en el inicio de sesión,
     // DEBES reemplazar estas claves con las correctas de tu proyecto Supabase.
     const SUPABASE_URL = "https://kcmxanjadpriphneygtx.supabase.co"; 
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbXhhbmphZHByaXBobmV5Z3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTU0ODMsImV4cCI6MjA3Mjg3MTQ4M30.J9tJn1pjdUHlFfTPpqWslWLs16CTs22IZiEgCjOMbGY"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbXhhbmphZHByaXBobmV5Z3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTU0ODMsImV4cCI6MjA3Mjg3MTQ4M30.J9tJn1pjdUHlFfTPpqWslWLs16CTs22IZhEgCjOMbGY"; 
     
     // **DEBUG:** Inicialización de Supabase
     console.log("Inicializando Supabase con URL:", SUPABASE_URL);
@@ -1262,7 +1262,7 @@ button.red:hover { background-color: #c9302c; }
 
 
     /************************************************************************
-     * ASISTENCIA / GESTIÓN DE ESPECTADORES (RT SIMULADO)
+     * ASISTENCIA / GESTIÓN DE ESPECTADORES (RT)
      ************************************************************************/
     async function joinSession(){
       const sessionCode = document.getElementById('session-id-input').value.trim();
@@ -1559,11 +1559,11 @@ button.red:hover { background-color: #c9302c; }
       currentSlide = pageNumber;
       
       document.getElementById('current-slide').textContent = pageNumber;
-      document.getElementById('spectator-slide-number').textContent = pageNumber;
+      // Enviamos la actualización de la diapositiva en tiempo real
+      broadcastSlide();
+      
       document.getElementById('current-slide-content').style.display = 'none';
       document.getElementById('pdf-canvas').style.display = 'block';
-      
-      // La previsualización no necesita reajustar el contenedor, ya se hizo en loadPresentation
     }
     
     function viewMaterial(name, type, url){
@@ -1578,27 +1578,38 @@ button.red:hover { background-color: #c9302c; }
       if (currentSlide < totalSlides) {
         currentSlide++;
         if (pdfDoc) renderPDFPage(currentSlide); else updateSlide();
-        broadcastSlide();
+        // Llamada a broadcastSlide() ahora está dentro de renderPDFPage/updateSlide
       }
     }
     function prevSlide(){
       if (currentSlide > 1) {
         currentSlide--;
         if (pdfDoc) renderPDFPage(currentSlide); else updateSlide();
-        broadcastSlide();
+        // Llamada a broadcastSlide() ahora está dentro de renderPDFPage/updateSlide
       }
     }
     function updateSlide(){
         // Esto solo se llama si NO hay PDF cargado (fallback)
         document.getElementById('current-slide').textContent = currentSlide;
-        document.getElementById('spectator-slide-number').textContent = currentSlide;
         document.getElementById('current-slide-content').innerHTML = `<h3>Diapositiva ${currentSlide}</h3><p>Contenido de la diapositiva ${currentSlide}</p>`;
+        broadcastSlide();
     }
+    
+    // Función central para enviar la actualización de la diapositiva a todos los espectadores
     function broadcastSlide(){
       if (rt.chan && rt.chan.send) {
-        try { rt.chan.send({ type:'broadcast', event:'slide', payload:{ currentSlide, totalSlides } }); console.log("[RT] Diapositiva enviada:", currentSlide); } catch(e) { console.warn('Error RT slide', e); }
+        try { 
+            rt.chan.send({ 
+                type:'broadcast', 
+                event:'slide', 
+                payload:{ currentSlide, totalSlides, presentationTitle: currentPresentation || "Sin Presentación" } 
+            }); 
+            console.log("[RT] Diapositiva enviada:", currentSlide); 
+        } catch(e) { 
+            console.warn('Error RT slide', e); 
+        }
       } else {
-          alert('Debes iniciar una sesión con el botón "Generar Nuevo Código QR" para sincronizar la diapositiva.');
+          console.warn('Realtime no está activo. La diapositiva no se sincronizará.');
       }
     }
     
@@ -1763,17 +1774,22 @@ button.red:hover { background-color: #c9302c; }
           if (opts.asSpectator) {
             currentSlide = payload.payload.currentSlide;
             totalSlides = payload.payload.totalSlides;
+            const title = payload.payload.presentationTitle;
+            
+            // Actualizar UI del espectador
             document.getElementById('spectator-slide-number').textContent = currentSlide;
             document.getElementById('spectator-total-slides').textContent = totalSlides;
-            // Aquí se simularía la carga de la diapositiva en la vista del espectador
+            document.getElementById('spectator-presentation-title').textContent = title;
+
+            // Simulación de vista previa del documento
             document.getElementById('spectator-current-slide-content').innerHTML = `
                 <h3>Diapositiva ${currentSlide}</h3>
-                <p>El presentador está viendo la diapositiva ${currentSlide} de ${totalSlides}.</p>
+                <p>El presentador está viendo la diapositiva ${currentSlide} de ${totalSlides} del documento: ${title}.</p>
             `;
-            console.log(`[RT-Spectator] Diapositiva sincronizada: ${currentSlide}/${totalSlides}`);
+            console.log(`[RT-Spectator] Diapositiva sincronizada: ${currentSlide}/${totalSlides} (${title})`);
           }
         });
-        
+
         // 3. Gestión de PRESENCIA (quién entra y sale - SOLO para el Presentador)
         // El Presentador se suscribe a los cambios de presencia
         chan.on('presence', { event: 'sync' }, () => {
