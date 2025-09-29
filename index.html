@@ -988,8 +988,13 @@ button.red:hover { background-color: #c9302c; }
     // **NOTA IMPORTANTE:** Si experimentas el error "API Key Inválida" en el inicio de sesión,
     // DEBES reemplazar estas claves con las correctas de tu proyecto Supabase.
     const SUPABASE_URL = "https://kcmxanjadpriphneygtx.supabase.co"; 
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbXhhbmphZHByaXBobmV5Z3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTU0ODMsImV4cCI6MjA3Mjg3MTQ4M30.J9tJn1pjdUHlFfTPpqWslWLs16CTs22IZhEgCjOMbGY"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbXhhbmphZHByaXBobmV5Z3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTU0ODMsImV4cCI6MjA3Mjg3MTQ4M30.J9tJn1pjdUHlFfTPpqWslWLs16CTs22IZiEgCjOMbGY"; 
+    
+    // **DEBUG:** Inicialización de Supabase
+    console.log("Inicializando Supabase con URL:", SUPABASE_URL);
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log("Cliente Supabase creado:", supa);
+
 
     /************************************************************************
      * ESTADO LOCAL Y SIMULACIÓN DE BD
@@ -1121,24 +1126,28 @@ button.red:hover { background-color: #c9302c; }
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       
+      console.log(`Intentando iniciar sesión para: ${email}`);
+      
       try {
         const { data, error } = await supa.auth.signInWithPassword({
           email: email,
           password: password,
         });
+        
+        console.log("Respuesta de Supabase:", { data, error });
 
         if (error) {
           // Manejo de errores específicos de Supabase
           console.error("Error de autenticación:", error.message);
           // Mostrar alerta directa para que el usuario sepa que falló por credenciales o API
-          alert(`Error de inicio de sesión: ${error.message}. Verifica tus credenciales o clave API.`);
+          alert(`Error de inicio de sesión: ${error.message}. Verifica tus credenciales o la configuración de tu clave API.`);
           return;
         }
 
         // Si la autenticación es exitosa
         if (data.user) {
           currentUser = data.user;
-          console.log("Usuario autenticado:", currentUser);
+          console.log("Usuario autenticado exitosamente:", currentUser);
           showPage('presenter-dashboard');
         } else {
           // Esto puede ocurrir si no hay error pero tampoco un usuario (ej. si el correo requiere confirmación)
@@ -1146,9 +1155,9 @@ button.red:hover { background-color: #c9302c; }
         }
 
       } catch (err) {
-        console.error('Error durante la autenticación:', err);
+        console.error('Error durante la autenticación (Excepción):', err);
         // Mostrar error general si la llamada falló por red o clave API
-        alert('Ocurrió un error inesperado durante el inicio de sesión. Por favor, verifica la URL y la ANON_KEY de Supabase.');
+        alert('Ocurrió un error de red o configuración durante el inicio de sesión. Por favor, verifica si estás usando un servidor local (Live Server).');
       }
     }
 
@@ -1160,11 +1169,13 @@ button.red:hover { background-color: #c9302c; }
     }
 
     async function logout(){
+      console.log("Cerrando sesión...");
       try {
         const { error } = await supa.auth.signOut();
         if (error) throw error;
         currentUser = null;
         await cleanupRealtime();
+        console.log("Sesión cerrada exitosamente.");
         showPage('landing');
       } catch (err) {
         console.error('Error durante el cierre de sesión:', err);
@@ -1180,6 +1191,7 @@ button.red:hover { background-color: #c9302c; }
         const joinUrl = `${window.location.origin}${window.location.pathname}?session=${code}`;
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(joinUrl)}`;
         qrImg.style.display = 'block';
+        console.log("QR Code generado con URL:", joinUrl);
     }
 
     async function generateNewSession(){
@@ -1721,6 +1733,7 @@ button.red:hover { background-color: #c9302c; }
      * REALTIME (Funcionalidad mejorada para Presencia y Sincronización)
      ************************************************************************/
     async function initRealtimeForSession(sessionCode, opts = {}) {
+      console.log(`[RT] Intentando inicializar sesión RT para: ${sessionCode}`);
       await cleanupRealtime();
 
       rt.sessionId = sessionCode; 
@@ -1765,6 +1778,7 @@ button.red:hover { background-color: #c9302c; }
         // El Presentador se suscribe a los cambios de presencia
         chan.on('presence', { event: 'sync' }, () => {
              if (!opts.asPresenter) return;
+             console.log("[RT-Presenter] Presencia: Sincronización completa.");
              const state = chan.presenceState();
              rt.liveSpectators = {};
              // Reconstruir la lista completa a partir del estado de presencia
@@ -1773,12 +1787,12 @@ button.red:hover { background-color: #c9302c; }
                  rt.liveSpectators[p.id] = { name: p.name, id: p.id };
              });
              updateSpectatorList();
-             console.log("[RT] Sincronización de Presencia completa.");
         });
         
         // El Presentador se suscribe a los eventos de unirse/salir para una actualización incremental más rápida
         chan.on('presence', { event: 'join' }, ({ newPresences }) => {
              if (!opts.asPresenter) return;
+             console.log("[RT-Presenter] Presencia: Nuevo espectador se unió.", newPresences);
             newPresences.forEach(p => {
                  // Solo agregamos si no es el mismo presentador uniéndose
                  if (p.name !== (currentUser?.user_metadata?.name || 'Presentador RT')) addSpectatorToListRT(p);
@@ -1786,12 +1800,14 @@ button.red:hover { background-color: #c9302c; }
         });
         chan.on('presence', { event: 'leave' }, ({ leftPresences }) => {
              if (!opts.asPresenter) return;
+             console.log("[RT-Presenter] Presencia: Espectador salió.", leftPresences);
             leftPresences.forEach(p => {
                  if (p.name !== (currentUser?.user_metadata?.name || 'Presentador RT')) removeSpectatorFromListRT(p);
             });
         });
         
         await chan.subscribe(async (status) => {
+            console.log(`[RT] Estado de Suscripción: ${status}`);
             if (status === 'SUBSCRIBED') {
                 // Generar un ID único para rastreo de presencia
                 rt.presenceKey = `${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
@@ -1801,7 +1817,7 @@ button.red:hover { background-color: #c9302c; }
                 
                 // Trackear al usuario en el canal de presencia
                 await chan.track({ name: name, id: rt.presenceKey, type: opts.asPresenter ? 'presenter' : 'spectator' });
-                console.log(`[RT] Conexión establecida. Usuario: ${name} (${userType})`);
+                console.log(`[RT] Conexión establecida. Usuario: ${name} (${userType}) - Key: ${rt.presenceKey}`);
                 
                 // Si es un espectador uniéndose, solicitamos la diapositiva actual al presentador
                 if (opts.asSpectator) {
@@ -1811,7 +1827,7 @@ button.red:hover { background-color: #c9302c; }
         });
         
       } catch(err){
-        console.warn('initRealtimeForSession err', err);
+        console.error('initRealtimeForSession err', err);
         // Fallback: Si Supabase falla, usamos un objeto simulado para que .send() no dé error
         rt.chan = { 
             send: (msg) => { console.warn("RT SIMULADO: Mensaje enviado localmente.", msg); } ,
@@ -1847,9 +1863,10 @@ button.red:hover { background-color: #c9302c; }
     }
     
     async function cleanupRealtime(){
+        console.log("[RT] Limpiando conexión Realtime.");
         if (rt.chan && rt.chan.unsubscribe) {
-             try { rt.chan.untrack(); } catch(e){}
-             try { rt.chan.unsubscribe(); } catch(e){}
+             try { rt.chan.untrack(); } catch(e){ console.warn("Error untrack:", e); }
+             try { rt.chan.unsubscribe(); } catch(e){ console.warn("Error unsubscribe:", e); }
         }
         rt = { chan:null, sessionId:null, presenceKey:null, liveSpectators: {} };
         const connectedSpectatorsEl = document.getElementById('connected-spectators');
@@ -1902,10 +1919,15 @@ button.red:hover { background-color: #c9302c; }
 
     // Inicialización: Llama a las funciones de carga de datos demo
     (function init(){
+      console.log("Iniciando aplicación...");
       // Revisa si hay un usuario logueado en Supabase al cargar la página
       supa.auth.getSession().then(({ data, error }) => {
+          if (error) {
+              console.warn("Error al obtener sesión (probablemente no logueado):", error);
+          }
           if (data.session) {
               currentUser = data.user;
+              console.log("Sesión activa detectada. Redirigiendo a dashboard.");
               showPage('presenter-dashboard');
               return;
           }
@@ -1920,7 +1942,14 @@ button.red:hover { background-color: #c9302c; }
             } else {
               showPage('landing');
             }
-          } catch(e){ showPage('landing'); }
+          } catch(e){ 
+            console.error("Error al procesar URL o redirigir:", e);
+            showPage('landing'); 
+          }
+      }).catch(err => {
+          console.error("Fallo grave al conectar a Supabase Auth:", err);
+          alert("Error de conexión inicial. La base de datos no está disponible. Revisa tu URL/KEY.");
+          showPage('landing');
       });
     })();
 
