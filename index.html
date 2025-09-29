@@ -161,169 +161,14 @@ button.red:hover { background-color: #c9302c; }
   .cta{min-width:360px; font-size:22px}
   .pudu-big{max-width:65%} /* más grande también en pantallas medianas */
 }
-/* --- INICIO: MEJORAS PARA MÓVIL (max-width: 640px) --- */
 @media (max-width:640px){
-  /* Layout principal y espaciado */
-  .site-header{
-    padding: 20px 16px 0 16px; /* Reducir padding horizontal */
-  }
-  .hero{
-    padding: 20px 16px 60px 16px; /* Reducir padding horizontal */
-    min-height: 85vh; /* Aumentar el tamaño para aprovechar más el espacio */
-  }
+  .site-header{padding:20px}
+  .hero{padding:20px}
   .pudu-big{display:none}
-  
-  /* Marca y Navegación */
-  .brand h1 { font-size: 24px; } /* Reducir el tamaño de la marca */
-  .logo { width: 48px; } /* Reducir el tamaño del logo */
-  .nav {
-    font-size: 14px; /* Reducir un poco el tamaño de la navegación */
-    display: flex;
-    align-items: center;
-  }
-  .nav a { padding: 0 6px; } /* Reducir el padding de los enlaces */
-
-  /* Hero Content */
-  .hero-content{
-    width: 100%; /* Usar todo el ancho */
-    max-width: none;
-    text-align: center;
-  }
-  .eyebrow{
-    font-size: 14px;
-    letter-spacing: 4px;
-  }
-  .headline{
-    font-size: 38px; /* Tamaño de titular más apropiado */
-    line-height: 1.1;
-    margin: 4px 0 12px 0;
-  }
-  .subhead{
-    font-size: 16px;
-    margin-bottom: 24px;
-  }
-
-  /* CTA List */
-  .cta-list { gap: 16px; } /* Reducir el espacio entre CTAs */
-  .cta{
-    min-width: 100%; /* Ocupar todo el ancho disponible */
-    justify-content: flex-start;
-    padding: 18px 24px; /* Ajustar el padding */
-    font-size: 20px; /* Reducir el tamaño de fuente */
-  }
+  .headline{font-size:32px}
+  .cta{min-width:100%; justify-content:flex-start}
   .cta-icon{width:48px;height:auto}
-
-  /* App Shell (Contenido Interno) */
-  .app-shell {
-    padding: 0 16px 60px 16px; /* Reducir el padding horizontal */
-  }
-
-  /* Formularios (Login/Join) */
-  .auth-form, .spectator-input-card {
-    padding: 30px 20px; /* Reducir el padding interno */
-  }
-  .auth-form h2, .spectator-input-card h2 { font-size: 24px; }
-
-  /* Dashboard Layout */
-  .presenter-dashboard {
-    flex-direction: column; /* Apilar sidebar y main-content */
-    gap: 20px;
-    margin-top: 20px !important;
-  }
-
-  /* Sidebar */
-  .sidebar {
-    width: 100%; /* Ocupar todo el ancho */
-    padding: 10px 0;
-    order: -1; /* Mover la barra lateral hacia arriba (opcional: mejor para UX móvil) */
-  }
-  .sidebar h3 {
-    margin: 10px 15px;
-    border-bottom: none;
-    padding-bottom: 0;
-    font-size: 16px;
-    text-align: center;
-    display: none; /* Ocultar el título 'Menú del Presentador' para ahorrar espacio */
-  }
-  .sidebar ul {
-    display: flex; /* Mostrar como una barra horizontal deslizante si es necesario */
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 5px; /* Pequeño padding para los bordes */
-  }
-  .sidebar li { flex-shrink: 0; }
-  .sidebar li a {
-    padding: 8px 15px; /* Más compacto */
-    font-size: 14px;
-    border-left: none; /* Quitar borde izquierdo en móvil */
-    border-radius: 10px; /* Borde suave */
-    margin: 0 5px;
-    text-align: center;
-  }
-  .sidebar li a.active {
-    border-left: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  }
-  .sidebar li a span { display: none; } /* Ocultar el texto para mostrar solo el ícono (opcional) */
-  .sidebar li a.active span { display: inline-block; } /* Mostrar solo el icono activo */
-  .sidebar li a.active:after { content: attr(data-icon); } /* Si quieres mostrar solo el texto activo, puedes hacer esto */
-  .sidebar li a:before { content: attr(data-icon); margin-right: 5px; } /* Mantenemos el ícono, si existe. */
-  /* Ajuste rápido para mostrar texto y ícono en móvil */
-  .sidebar li a span { display: inline; }
-
-
-  /* Dashboard Grid */
-  .dashboard-grid {
-    grid-template-columns: 1fr; /* Una columna en móvil */
-  }
-
-  /* Live Session / Questions Builder */
-  .presentation-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .live-reactions {
-    justify-content: space-around;
-    flex-wrap: wrap;
-    margin-bottom: 15px;
-  }
-  .timer-section {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .timer-section input { width: 40px !important; }
-  .timer-section button { margin-top: 10px; }
-  .timer-display { margin-top: 10px; margin-left: 0; }
-  
-  .question-type-selector {
-    flex-wrap: wrap;
-  }
-  .question-type-selector button { flex-grow: 1; }
-  .add-option { width: 100%; }
-  
-  /* Controles de Presentación */
-  #presenter-live-session-content .content-card div[style*="flex"] {
-    flex-direction: column;
-  }
-  #presenter-live-session-content .content-card button {
-    width: 100%;
-    margin-top: 8px;
-  }
-  /* Interfaz de Espectador */
-  .spectator-interface {
-    margin: 20px auto;
-    padding: 20px;
-  }
-  .spectator-interactions button {
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-  }
-  
 }
-/* --- FIN: MEJORAS PARA MÓVIL (max-width: 640px) --- */
-
-
 /* --- FIN: tu CSS EXACTO (no modificado) --- */
 
 
@@ -857,15 +702,15 @@ button.red:hover { background-color: #c9302c; }
       <div class="sidebar">
         <h3>Menú del Presentador</h3>
         <ul>
-          <li><a href="#" data-icon="📊" class="active" onclick="showPresenterContent('overview')"><span class="sidebar-icon">📊</span> Resumen</a></li>
-          <li><a href="#" data-icon="📝" onclick="showPresenterContent('presentations')"><span class="sidebar-icon">📝</span> Presentaciones</a></li>
-          <li><a href="#" data-icon="🔴" onclick="showPresenterContent('live-session')"><span class="sidebar-icon">🔴</span> Sesión en Vivo</a></li>
-          <li><a href="#" data-icon="❓" onclick="showPresenterContent('questions')"><span class="sidebar-icon">❓</span> Preguntas</a></li>
-          <li><a href="#" data-icon="👥" onclick="showPresenterContent('spectator-management')"><span class="sidebar-icon">👥</span> Gestión de Espectadores</a></li>
-          <li><a href="#" data-icon="📚" onclick="showPresenterContent('course-materials')"><span class="sidebar-icon">📚</span> Materiales</a></li>
-          <li><a href="#" data-icon="📈" onclick="showPresenterContent('reports')"><span class="sidebar-icon">📈</span> Informes</a></li>
-          <li><a href="#" data-icon="⚙️" onclick="alert('¡Página de configuración próximamente!')"><span class="sidebar-icon">⚙️</span> Configuración</a></li>
-          <li><a href="#" data-icon="🚪" onclick="logout()"><span class="sidebar-icon">🚪</span> Cerrar Sesión</a></li>
+          <li><a href="#" class="active" onclick="showPresenterContent('overview')"><span class="sidebar-icon">📊</span> Resumen</a></li>
+          <li><a href="#" onclick="showPresenterContent('presentations')"><span class="sidebar-icon">📝</span> Presentaciones</a></li>
+          <li><a href="#" onclick="showPresenterContent('live-session')"><span class="sidebar-icon">🔴</span> Sesión en Vivo</a></li>
+          <li><a href="#" onclick="showPresenterContent('questions')"><span class="sidebar-icon">❓</span> Preguntas</a></li>
+          <li><a href="#" onclick="showPresenterContent('spectator-management')"><span class="sidebar-icon">👥</span> Gestión de Espectadores</a></li>
+          <li><a href="#" onclick="showPresenterContent('course-materials')"><span class="sidebar-icon">📚</span> Materiales</a></li>
+          <li><a href="#" onclick="showPresenterContent('reports')"><span class="sidebar-icon">📈</span> Informes</a></li>
+          <li><a href="#" onclick="alert('¡Página de configuración próximamente!')"><span class="sidebar-icon">⚙️</span> Configuración</a></li>
+          <li><a href="#" onclick="logout()"><span class="sidebar-icon">🚪</span> Cerrar Sesión</a></li>
         </ul>
       </div>
 
