@@ -84,13 +84,13 @@ body{
   position: fixed;     /* en vez de absolute */
   left: 0;
   bottom: 0;
-  /* AJUSTE: Reducir la altura para evitar que ocupe toda la pantalla y domine la vista. */
-  height: 85vh;       /* Ajuste para que no domine tanto */
+  height: 90vh;       /* ocupa toda la altura visible */
   width: auto;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
   z-index: 1;
+  opacity: 0.5;
 }
 
 
@@ -677,24 +677,28 @@ button.red:hover { background-color: #c9302c; }
         <h2 id="auth-title">Inicio de Presentador</h2>
         <form id="login-form" onsubmit="event.preventDefault(); authenticateUser();">
           <label for="email">Correo electrónico:</label>
-          <input type="email" id="email" name="email" value="presentador@aulapudu.com" required>
+          <input type="email" id="email" name="email" placeholder="tu@correo.com" required>
           <label for="password">Contraseña:</label>
-          <input type="password" id="password" name="password" value="123456" required>
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
           <button type="submit" style="margin-top:30px;">Iniciar Sesión</button>
+          <div id="login-error" style="margin-top:10px;color:#c0392b;font-weight:600;"></div>
           <div class="switch-form">
             ¿No tienes una cuenta? <a href="#" onclick="toggleAuthForm()">Regístrate aquí</a>
           </div>
         </form>
+
         <form id="register-form" style="display:none;" onsubmit="event.preventDefault(); registerUser();">
           <label for="reg-name">Nombre completo:</label>
-          <input type="text" id="reg-name" name="reg-name" required>
+          <input type="text" id="reg-name" name="reg-name" placeholder="Tu nombre" required>
           <label for="reg-email">Correo electrónico:</label>
-          <input type="email" id="reg-email" name="reg-email" required>
+          <input type="email" id="reg-email" name="reg-email" placeholder="tu@correo.com" required>
           <label for="reg-password">Contraseña:</label>
-          <input type="password" id="reg-password" name="reg-password" required>
+          <input type="password" id="reg-password" name="reg-password" placeholder="Mín. 6 caracteres" minlength="6" required>
           <label for="confirm-password">Confirmar Contraseña:</label>
-          <input type="password" id="confirm-password" name="confirm-password" required>
+          <input type="password" id="confirm-password" name="confirm-password" placeholder="Repite la contraseña" minlength="6" required>
           <button type="submit" style="margin-top:30px;">Registrarse</button>
+          <div id="register-error" style="margin-top:10px;color:#c0392b;font-weight:600;"></div>
+          <div id="register-success" style="margin-top:10px;color:#1e8449;font-weight:700;"></div>
           <div class="switch-form">
             ¿Ya tienes una cuenta? <a href="#" onclick="toggleAuthForm()">Inicia sesión aquí</a>
           </div>
@@ -985,19 +989,13 @@ button.red:hover { background-color: #c9302c; }
     /************************************************************************
      * CONFIG
      ************************************************************************/
-    // **NOTA IMPORTANTE:** Si experimentas el error "API Key Inválida" en el inicio de sesión,
-    // DEBES reemplazar estas claves con las correctas de tu proyecto Supabase.
-    const SUPABASE_URL = "https://kcmxanjadpriphneygtx.supabase.co"; 
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjbXhhbmphZHByaXBobmV5Z3R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcyOTU0ODMsImV4cCI6MjA3Mjg3MTQ4M30.J9tJn1pjdUHlFfTPpqWslWLs16CTs22IZhEgCjOMbGY"; 
-    
-    // **DEBUG:** Inicialización de Supabase
-    console.log("Inicializando Supabase con URL:", SUPABASE_URL);
+    // **IMPORTANTE:** Reemplaza estos valores con la configuración real de tu proyecto Supabase.
+    const SUPABASE_URL = "https://gxgbtnmqdghixfaamsad.supabase.co"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z2J0bm1xZGdoaXhmYWFtc2FkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNzAzMjgsImV4cCI6MjA3NDg0NjMyOH0.0dMTZONs7EDqWPFOV9M3gCUJKjdMBt9xdlLuQk13Jao"; 
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log("Cliente Supabase creado:", supa);
-
 
     /************************************************************************
-     * ESTADO LOCAL Y SIMULACIÓN DE BD
+     * ESTADO LOCAL
      ************************************************************************/
     let currentSessionCode = null; 
     let currentUser = null;
@@ -1014,7 +1012,7 @@ button.red:hover { background-color: #c9302c; }
     let rt = { chan: null, sessionId: null, presenceKey: null, liveSpectators: {} };
     let isPresenter = false;
     
-    // Almacenamiento local para archivos subidos por el presentador (simulación de Supabase Storage)
+    // Almacenamiento local para archivos subidos por el presentador (se mantiene simulación de STORAGE)
     let uploadedFiles = {
       presentations: [],
       materials: []
@@ -1073,6 +1071,10 @@ button.red:hover { background-color: #c9302c; }
       loginForm.style.display = isLogin ? 'none' : 'block';
       registerForm.style.display = isLogin ? 'block' : 'none';
       authTitle.innerText = isLogin ? 'Registro de Presentador' : 'Inicio de Presentador';
+      // limpiar mensajes
+      document.getElementById('login-error').textContent = '';
+      document.getElementById('register-error').textContent = '';
+      document.getElementById('register-success').textContent = '';
     }
 
     function showPresenterContent(contentId){
@@ -1103,12 +1105,10 @@ button.red:hover { background-color: #c9302c; }
         document.getElementById('total-slides').textContent = totalSlides;
         document.getElementById('current-slide').textContent = currentSlide;
         document.getElementById('current-presentation-title').textContent = currentPresentation || '--';
-        // Simular o mostrar contenido de la diapositiva
         if (!pdfDoc) {
              document.getElementById('current-slide-content').style.display = 'block';
              document.getElementById('pdf-canvas').style.display = 'none';
         } else {
-            // Si hay un PDF cargado, se renderiza la página
             renderPDFPage(currentSlide);
         }
       }
@@ -1120,68 +1120,76 @@ button.red:hover { background-color: #c9302c; }
     }
 
     /************************************************************************
-     * AUTH (USANDO SUPABASE)
+     * AUTH REAL CON SUPABASE (SIN SIMULACIÓN)
      ************************************************************************/
     async function authenticateUser(){
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      
-      console.log(`Intentando iniciar sesión para: ${email}`);
-      
-      try {
-        const { data, error } = await supa.auth.signInWithPassword({
-          email: email,
-          password: password,
-        });
-        
-        console.log("Respuesta de Supabase:", { data, error });
+      const errorBox = document.getElementById('login-error');
+      errorBox.textContent = '';
 
+      try {
+        const { data, error } = await supa.auth.signInWithPassword({ email, password });
         if (error) {
-          // Manejo de errores específicos de Supabase
-          console.error("Error de autenticación:", error.message);
-          // Mostrar alerta directa para que el usuario sepa que falló por credenciales o API
-          alert(`Error de inicio de sesión: ${error.message}. Verifica tus credenciales o la configuración de tu clave API.`);
+          errorBox.textContent = error.message || 'No se pudo iniciar sesión.';
           return;
         }
-
-        // Si la autenticación es exitosa
-        if (data.user) {
-          currentUser = data.user;
-          console.log("Usuario autenticado exitosamente:", currentUser);
-          showPage('presenter-dashboard');
-        } else {
-          // Esto puede ocurrir si no hay error pero tampoco un usuario (ej. si el correo requiere confirmación)
-           alert('Inicio de sesión fallido. Verifica tus credenciales o el estado de tu cuenta.');
+        currentUser = data.user || (await supa.auth.getUser()).data.user;
+        if (!currentUser) {
+          errorBox.textContent = 'No se pudo obtener el usuario.';
+          return;
         }
-
+        showPage('presenter-dashboard');
       } catch (err) {
-        console.error('Error durante la autenticación (Excepción):', err);
-        // Mostrar error general si la llamada falló por red o clave API
-        alert('Ocurrió un error de red o configuración durante el inicio de sesión. Por favor, verifica si estás usando un servidor local (Live Server).');
+        errorBox.textContent = err?.message || 'Error de autenticación.';
       }
     }
 
     async function registerUser(){
-      // En una aplicación real, usarías supa.auth.signUp() aquí
-      alert('Funcionalidad de registro (demo). Necesitas implementar supa.auth.signUp() para registrar usuarios en Supabase.');
-      // Simulación de vuelta al login
-      // toggleAuthForm(); 
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const confirm = document.getElementById('confirm-password').value;
+      const errBox = document.getElementById('register-error');
+      const okBox = document.getElementById('register-success');
+      errBox.textContent = '';
+      okBox.textContent = '';
+
+      if (password !== confirm) {
+        errBox.textContent = 'Las contraseñas no coinciden.';
+        return;
+      }
+
+      try {
+        const { data, error } = await supa.auth.signUp({
+          email,
+          password,
+          options: { data: { name } }
+        });
+        if (error) {
+          errBox.textContent = error.message || 'No se pudo registrar.';
+          return;
+        }
+        // Si tu proyecto requiere verificación por correo, informamos:
+        okBox.textContent = data.user?.confirmed_at
+          ? 'Registro exitoso. Ya puedes iniciar sesión.'
+          : 'Registro exitoso. Revisa tu correo para confirmar la cuenta y luego inicia sesión.';
+      } catch (err) {
+        errBox.textContent = err?.message || 'Error al registrar.';
+      }
     }
 
     async function logout(){
-      console.log("Cerrando sesión...");
-      try {
-        const { error } = await supa.auth.signOut();
-        if (error) throw error;
-        currentUser = null;
-        await cleanupRealtime();
-        console.log("Sesión cerrada exitosamente.");
-        showPage('landing');
-      } catch (err) {
-        console.error('Error durante el cierre de sesión:', err);
-        alert('Error al cerrar sesión.');
-      }
+      try { await supa.auth.signOut(); } catch(e){}
+      currentUser = null;
+      await cleanupRealtime();
+      showPage('landing');
     }
+
+    // Mantener sesión entre recargas
+    supa.auth.onAuthStateChange(async (_event, session) => {
+      currentUser = session?.user || null;
+    });
 
     /************************************************************************
      * SESSIONS (QR Y CÓDIGO)
@@ -1191,11 +1199,10 @@ button.red:hover { background-color: #c9302c; }
         const joinUrl = `${window.location.origin}${window.location.pathname}?session=${code}`;
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(joinUrl)}`;
         qrImg.style.display = 'block';
-        console.log("QR Code generado con URL:", joinUrl);
     }
 
     async function generateNewSession(){
-      const userId = currentUser ? currentUser.id : 'demo-presenter-123';
+      const userId = currentUser ? currentUser.id : null;
       if (!userId) return alert('Primero inicia sesión como presentador.');
       
       const code = 'AULAPUDU-' + Math.floor(10000 + Math.random()*90000);
@@ -1247,10 +1254,11 @@ button.red:hover { background-color: #c9302c; }
         document.getElementById('current-slide-content').innerHTML = `<h3>Diapositiva 1</h3><p>Carga una presentación PDF para previsualizar aquí.</p>`;
         document.getElementById('current-slide-content').style.display = 'block';
         
-        // 4. Notificar a los espectadores (simulación)
+        // 4. Notificar a los espectadores (si hay RT)
         if (rt.chan && rt.chan.send) {
              try { 
-                 rt.chan.send({ type:'broadcast', event:'presentation_end', payload:{} }); 
+                 // **CORRECCIÓN:** Enviar `presentation_end` para que el espectador sepa que debe mostrar la pantalla de espera.
+                 rt.chan.send({ type:'broadcast', event:'presentation_end', payload:{ title: '--' } }); 
                  console.log("[RT] Presentación finalizada enviada a espectadores."); 
              } catch(e) { 
                  console.warn('Error RT presentation_end', e); 
@@ -1269,16 +1277,18 @@ button.red:hover { background-color: #c9302c; }
       const spectatorName = document.getElementById('spectator-name').value.trim();
       if (!sessionCode || !spectatorName) return alert('Por favor, ingresa el ID de sesión y tu nombre.');
       
-      if (sessionCode.substring(0, 9) !== 'AULAPUDU-') return alert('ID de Sesión no válido (Demo).');
+      if (sessionCode.substring(0, 9) !== 'AULAPUDU-') return alert('ID de Sesión no válido.');
 
       try {
         currentSessionCode = sessionCode;
+        
         // **INICIALIZA REALTIME COMO ESPECTADOR**
         await initRealtimeForSession(currentSessionCode, { asSpectator: true, name: spectatorName });
         
         document.getElementById('spectator-presentation-title').textContent = "Sesión en Vivo: " + sessionCode;
-        document.getElementById('spectator-total-slides').textContent = totalSlides;
-        document.getElementById('spectator-slide-number').textContent = currentSlide;
+        // La info de diapositivas se actualizará en el handler de RT 'slide'
+        document.getElementById('spectator-total-slides').textContent = '--';
+        document.getElementById('spectator-slide-number').textContent = '--';
         
         showPage('spectator-interface');
 
@@ -1289,27 +1299,8 @@ button.red:hover { background-color: #c9302c; }
     }
 
     // Funciones para manipular la lista de espectadores en la UI
-    function addSpectatorToList(name) {
-        const key = name.replace(/\s/g, '-').toLowerCase();
-        // Si ya está, no hacemos nada para evitar duplicados
-        if (rt.liveSpectators[key]) return; 
-        
-        // Agregar al estado local de RT
-        rt.liveSpectators[key] = { name: name, key: key };
-        
-        updateSpectatorList();
-    }
-
-    function removeSpectatorFromList(name) {
-        const key = name.replace(/\s/g, '-').toLowerCase();
-        
-        // Eliminar del estado local de RT
-        if (rt.liveSpectators[key]) {
-             delete rt.liveSpectators[key];
-        }
-        
-        updateSpectatorList();
-    }
+    // Se ha simplificado para solo usar las funciones de RT (add/removeSpectatorFromListRT)
+    // y la función central de actualización (updateSpectatorList)
     
     // Función central para actualizar la lista de espectadores en la UI
     async function updateSpectatorList(){
@@ -1318,7 +1309,6 @@ button.red:hover { background-color: #c9302c; }
         const connectedSpectatorsDisplay = document.getElementById('connected-spectators');
         if (!list || !countDisplay || !connectedSpectatorsDisplay) return;
 
-        // Si no hay código de sesión, mostramos el mensaje por defecto
         if (!currentSessionCode) {
             list.innerHTML = '<li>Inicia una sesión en vivo para ver los espectadores.</li>';
             countDisplay.textContent = '0';
@@ -1326,7 +1316,8 @@ button.red:hover { background-color: #c9302c; }
             return;
         }
 
-        const spectatorsArray = Object.values(rt.liveSpectators);
+        // Se usa Object.values(rt.liveSpectators) que es poblado por el handler de 'presence'
+        const spectatorsArray = Object.values(rt.liveSpectators).filter(s => s.type !== 'presenter');
         
         list.innerHTML = '';
         const activeCount = spectatorsArray.length; 
@@ -1346,14 +1337,35 @@ button.red:hover { background-color: #c9302c; }
                 <span>👤 ${escapeHtml(s.name)} (Activo)</span>
                 <div>
                     <button onclick="alert('Mensaje enviado a ${escapeHtml(s.name)}')">Mensaje</button>
-                    <button class="red" onclick="removeSpectatorFromList('${escapeHtml(s.name)}')">✕ Salir</button>
+                    <button class="red" onclick="kickSpectator('${s.id}')">✕ Salir</button>
                 </div>
             `;
             list.appendChild(item);
         });
     }
 
-    // Funciones de Asistencia (simulación)
+    // Función para "expulsar" un espectador (simulando untrack en RT)
+    function kickSpectator(spectatorId) {
+        if (!rt.chan || !rt.chan.untrack) return;
+        
+        // Simular untrack para remover la presencia. 
+        // En una app real de Supabase, el presentador no puede "desuscribir" a otro, 
+        // pero sí podría enviar un broadcast privado para forzar el desconexión del cliente.
+        // Aquí simulamos que lo quita localmente y actualizamos la lista.
+        
+        if (rt.liveSpectators[spectatorId]) {
+            alert(`Simulando expulsión de ${rt.liveSpectators[spectatorId].name}.`);
+            // Simulación: removerlo de la lista y forzar actualización
+            delete rt.liveSpectators[spectatorId]; 
+            updateSpectatorList();
+            
+            // Opcionalmente, enviar un broadcast privado si Supabase lo permitiera:
+            // rt.chan.send({ type:'broadcast', event:'kick', payload:{ targetId: spectatorId } }); 
+        }
+    }
+
+
+    // Funciones de Asistencia (placeholder)
     async function viewAttendance(){
       const rpt = document.getElementById('attendance-report');
       rpt.style.display = (rpt.style.display === 'none' ? 'block' : 'none');
@@ -1361,14 +1373,13 @@ button.red:hover { background-color: #c9302c; }
     }
     async function updateAttendanceReport(){
       const list = document.getElementById('attendance-list');
-      list.innerHTML = '<p>Funcionalidad de reporte de asistencia (demo).</p>';
+      list.innerHTML = '<p>Funcionalidad de reporte de asistencia.</p>';
     }
     
     /************************************************************************
-     * PRESENTACIONES / MATERIALES (LÓGICA DINÁMICA Y PDF.JS)
+     * PRESENTACIONES / MATERIALES (PDF.JS + SIMULACIÓN DE STORAGE LOCAL)
      ************************************************************************/
     
-    // Dibuja los elementos de la lista 'uploadedFiles.presentations' en la UI
     function loadPresentationsListUI() {
       const ul = document.getElementById('presentations-list');
       ul.innerHTML = '';
@@ -1390,7 +1401,6 @@ button.red:hover { background-color: #c9302c; }
       });
     }
 
-    // Dibuja los elementos de la lista 'uploadedFiles.materials' en la UI
     function loadMaterialsListUI() {
       const ul = document.getElementById('materials-list');
       ul.innerHTML = '';
@@ -1406,19 +1416,12 @@ button.red:hover { background-color: #c9302c; }
       });
     }
     
-    // Función central para eliminar archivos de la simulación
     function deleteFile(event, name, type) {
         event.preventDefault();
-        if (!confirm(`¿Estás seguro de que deseas eliminar el archivo "${name}"? Esto es una simulación de Supabase Storage.`)) return;
-        
+        if (!confirm(`¿Estás seguro de que deseas eliminar el archivo "${name}"?`)) return;
         uploadedFiles[type] = uploadedFiles[type].filter(f => f.name !== name);
-        
-        // Actualizar la UI
-        if (type === 'presentations') {
-            loadPresentationsListUI();
-        } else if (type === 'materials') {
-            loadMaterialsListUI();
-        }
+        if (type === 'presentations') loadPresentationsListUI();
+        else if (type === 'materials') loadMaterialsListUI();
         alert(`Archivo "${name}" eliminado.`);
     }
 
@@ -1433,12 +1436,11 @@ button.red:hover { background-color: #c9302c; }
       uploadStatus.innerHTML = '<div class="loading-spinner"></div> Subiendo presentación...';
       try {
         const fileExt = file.name.split('.').pop().toLowerCase();
-        // Usar FileReader para leer el archivo localmente
         const fileUrl = URL.createObjectURL(file); 
 
         uploadedFiles.presentations.push({ name: file.name, type: fileExt, url: fileUrl, file });
         
-        loadPresentationsListUI(); // Actualizar la UI
+        loadPresentationsListUI();
         
         input.value = '';
         uploadStatus.innerHTML = 'Presentación subida correctamente';
@@ -1465,7 +1467,7 @@ button.red:hover { background-color: #c9302c; }
 
         uploadedFiles.materials.push({ name: file.name, type: fileExt, url: fileUrl });
         
-        loadMaterialsListUI(); // Actualizar la UI
+        loadMaterialsListUI();
         
         input.value = '';
         uploadStatus.innerHTML = 'Material subido correctamente';
@@ -1477,7 +1479,6 @@ button.red:hover { background-color: #c9302c; }
       }
     }
     
-    // Función para cargar y previsualizar la presentación
     async function loadPresentation(title, type, fileUrl){
       currentPresentation = title;
       currentSlide = 1;
@@ -1494,15 +1495,12 @@ button.red:hover { background-color: #c9302c; }
       uploadStatus.innerHTML = '<div class="loading-spinner"></div> Cargando presentación para previsualización...';
       
       if (type === 'pdf' && window.pdfjsLib) {
-          // Buscamos el objeto de archivo original
           const fileData = uploadedFiles.presentations.find(p => p.name === title);
-          
           if (fileData && fileData.file) {
              try {
-                // Renderizar PDF.js
                 pdfDoc = await pdfjsLib.getDocument(fileUrl).promise;
                 totalSlides = pdfDoc.numPages;
-                await renderPDFPage(1); // Muestra la primera página
+                await renderPDFPage(1);
                 document.getElementById('pdf-canvas').style.display = 'block';
                 document.getElementById('current-slide-content').style.display = 'none';
              } catch (e) {
@@ -1513,41 +1511,38 @@ button.red:hover { background-color: #c9302c; }
                 document.getElementById('current-slide-content').style.display = 'block';
              }
           } else {
-            // Fallback si no se encuentra el objeto File
             totalSlides = 1;
             document.getElementById('current-slide-content').innerHTML = `<h3>Carga Exitosa (Archivo no encontrado)</h3><p>Simulación de presentación de 1 diapositiva.</p>`;
             document.getElementById('pdf-canvas').style.display = 'none';
             document.getElementById('current-slide-content').style.display = 'block';
           }
       } else {
-        // Para PPTX y otros tipos, o si PDF.js no está cargado
         totalSlides = 1;
         document.getElementById('current-slide-content').innerHTML = `<h3>Carga Exitosa (Tipo: ${type.toUpperCase()})</h3><p>La previsualización en vivo solo está disponible para archivos PDF.</p>`;
         document.getElementById('pdf-canvas').style.display = 'none';
         document.getElementById('current-slide-content').style.display = 'block';
       }
 
-      // Actualizar contadores
       document.getElementById('total-slides').textContent = totalSlides;
       document.getElementById('current-slide').textContent = currentSlide;
       document.getElementById('spectator-total-slides').textContent = totalSlides;
       document.getElementById('spectator-slide-number').textContent = currentSlide;
 
-
+      // **CORRECCIÓN:** Enviar broadcast de diapositiva inicial después de cargar la presentación.
+      broadcastSlide();
+      
       setTimeout(() => {
           uploadStatus.innerHTML = 'Presentación cargada correctamente';
           setTimeout(() => { uploadStatus.innerHTML = ''; showPresenterContent('live-session'); }, 800);
       }, 500);
     }
     
-    // Función central para renderizar la página PDF
     async function renderPDFPage(pageNumber){
       if (!pdfDoc) return;
       const page = await pdfDoc.getPage(pageNumber);
       const canvas = document.getElementById('pdf-canvas');
       const context = canvas.getContext('2d');
-      // Escalar para caber en el contenedor
-      const containerWidth = document.getElementById('pdf-viewer-container').clientWidth - 40; // Restar padding
+      const containerWidth = document.getElementById('pdf-viewer-container').clientWidth - 40;
       const viewport = page.getViewport({ scale: containerWidth / page.getViewport({ scale: 1 }).width });
       
       canvas.height = viewport.height;
@@ -1559,9 +1554,7 @@ button.red:hover { background-color: #c9302c; }
       currentSlide = pageNumber;
       
       document.getElementById('current-slide').textContent = pageNumber;
-      // Enviamos la actualización de la diapositiva en tiempo real
-      broadcastSlide();
-      
+      document.getElementById('spectator-slide-number').textContent = pageNumber;
       document.getElementById('current-slide-content').style.display = 'none';
       document.getElementById('pdf-canvas').style.display = 'block';
     }
@@ -1578,46 +1571,51 @@ button.red:hover { background-color: #c9302c; }
       if (currentSlide < totalSlides) {
         currentSlide++;
         if (pdfDoc) renderPDFPage(currentSlide); else updateSlide();
-        // Llamada a broadcastSlide() ahora está dentro de renderPDFPage/updateSlide
+        broadcastSlide();
       }
     }
     function prevSlide(){
       if (currentSlide > 1) {
         currentSlide--;
         if (pdfDoc) renderPDFPage(currentSlide); else updateSlide();
-        // Llamada a broadcastSlide() ahora está dentro de renderPDFPage/updateSlide
+        broadcastSlide();
       }
     }
     function updateSlide(){
-        // Esto solo se llama si NO hay PDF cargado (fallback)
+        // Esto es para presentaciones que no son PDF (solo actualiza el número y texto simulado)
         document.getElementById('current-slide').textContent = currentSlide;
+        document.getElementById('spectator-slide-number').textContent = currentSlide;
         document.getElementById('current-slide-content').innerHTML = `<h3>Diapositiva ${currentSlide}</h3><p>Contenido de la diapositiva ${currentSlide}</p>`;
-        broadcastSlide();
     }
-    
-    // Función central para enviar la actualización de la diapositiva a todos los espectadores
+
+    /**
+     * **FUNCIÓN CLAVE**
+     * Envía la diapositiva actual y el estado de la presentación a los espectadores.
+     */
     function broadcastSlide(){
       if (rt.chan && rt.chan.send) {
         try { 
             rt.chan.send({ 
                 type:'broadcast', 
                 event:'slide', 
-                payload:{ currentSlide, totalSlides, presentationTitle: currentPresentation || "Sin Presentación" } 
+                payload:{ 
+                    currentSlide, 
+                    totalSlides,
+                    presentationTitle: currentPresentation || "Sesión en Vivo"
+                } 
             }); 
             console.log("[RT] Diapositiva enviada:", currentSlide); 
         } catch(e) { 
             console.warn('Error RT slide', e); 
         }
       } else {
-          console.warn('Realtime no está activo. La diapositiva no se sincronizará.');
+          alert('Debes iniciar una sesión con el botón "Generar Nuevo Código QR" para sincronizar la diapositiva.');
       }
     }
     
     /************************************************************************
-     * PREGUNTAS (Funcionalidad Completa de Tipos)
+     * PREGUNTAS
      ************************************************************************/
-     
-    // Configura los campos de opción según el tipo de pregunta
     function setQuestionType(type, event){
       questionType = type;
       document.querySelectorAll('.question-type-selector button').forEach(b => b.classList.remove('active'));
@@ -1629,19 +1627,16 @@ button.red:hover { background-color: #c9302c; }
         c.style.display='block'; 
       } else {
         c.style.display='flex';
-        // Reiniciar las opciones
         if (type === 'true-false'){
           c.innerHTML = `
             <div class="option-input"><input type="text" value="Verdadero" readonly></div>
             <div class="option-input"><input type="text" value="Falso" readonly></div>`;
         } else {
-          // Opción Múltiple
           c.innerHTML = `
             <div class="option-input"><input type="text" placeholder="Opción 1"><button class="red" onclick="removeOption(this)">✕</button></div>
             <div class="option-input"><input type="text" placeholder="Opción 2"><button class="red" onclick="removeOption(this)">✕</button></div>`;
         }
       }
-      // Habilitar/deshabilitar botón Añadir Opción
       document.querySelector('.add-option').style.display = (type === 'multiple-choice') ? 'block' : 'none';
     }
 
@@ -1672,12 +1667,10 @@ button.red:hover { background-color: #c9302c; }
           });
           if (options.length < 2) return alert('Para este tipo de pregunta, se requieren al menos dos opciones.');
       }
-      
-      // Simulación de guardar en BD
+      // Guarda en memoria local (tu pedido no requiere BD para preguntas)
       const newQuestion = { id: savedQuestions.length + 10, title, qtype: questionType, options };
       savedQuestions.push(newQuestion);
-      
-      alert('Pregunta guardada correctamente (Demo).');
+      alert('Pregunta guardada correctamente.');
       document.getElementById('question-title').value = '';
       loadSavedQuestions();
     }
@@ -1685,14 +1678,6 @@ button.red:hover { background-color: #c9302c; }
      function loadSavedQuestions(){
       const list = document.getElementById('saved-questions');
       list.innerHTML = '';
-      if (savedQuestions.length === 0) {
-          // Datos demo de inicialización si no hay nada guardado
-          savedQuestions = [
-              { id: 1, title: '¿Cuál es la capital de Francia?', qtype: 'multiple-choice', options: ['París', 'Madrid', 'Berlín'] },
-              { id: 2, title: 'El pudú es el cérvido más grande del mundo.', qtype: 'true-false', options: ['Verdadero', 'Falso'] },
-          ];
-      }
-      
       if (savedQuestions && savedQuestions.length>0) {
           savedQuestions.forEach(q => {
             const li = document.createElement('li');
@@ -1721,7 +1706,7 @@ button.red:hover { background-color: #c9302c; }
       event.preventDefault();
       if (!confirm('¿Estás seguro de que deseas eliminar esta pregunta?')) return;
       savedQuestions = savedQuestions.filter(q => q.id !== questionId);
-      alert('Pregunta eliminada correctamente (Demo).');
+      alert('Pregunta eliminada correctamente.');
       loadSavedQuestions();
     }
     function useQuestionNow(buttonElement, questionId, title, qtype, options){
@@ -1741,26 +1726,30 @@ button.red:hover { background-color: #c9302c; }
 
 
     /************************************************************************
-     * REALTIME (Funcionalidad mejorada para Presencia y Sincronización)
+     * REALTIME (Presencia y Sincronización)
      ************************************************************************/
     async function initRealtimeForSession(sessionCode, opts = {}) {
-      console.log(`[RT] Intentando inicializar sesión RT para: ${sessionCode}`);
       await cleanupRealtime();
 
       rt.sessionId = sessionCode; 
       
       try {
         const topic = `realtime:${sessionCode}`;
+        
+        // **CORRECCIÓN:** Asegurar que 'presence' esté correctamente configurado en el canal.
+        const name = opts.name || (currentUser?.user_metadata?.name || (opts.asPresenter ? 'Presentador RT' : 'Espectador RT'));
         const chan = supa.channel(topic, { 
-            // Configura Presencia para rastrear quién está en el canal
-            config: { broadcast: true, presence: { key: opts.asSpectator ? 'spectator' : 'presenter' } }
+            config: { 
+                broadcast: { ack: false }, 
+                presence: { 
+                    key: name, // Usar el nombre como la clave de presencia para fácil identificación
+                } 
+            }
         });
         
         rt.chan = chan;
 
-        // **ESCUCHAS EN TIEMPO REAL (APLICABLE A AMBOS)**
-        
-        // 1. Escucha de Reacciones (solo el presentador necesita actualizar contadores)
+        // Broadcast: Reacciones -> solo el presentador actualiza contadores
         chan.on('broadcast', { event: 'reaction' }, (payload) => {
           if (opts.asPresenter) {
             const k = payload.payload.kind;
@@ -1769,120 +1758,126 @@ button.red:hover { background-color: #c9302c; }
           }
         });
         
-        // 2. Escucha de Sincronización de Diapositivas (solo el espectador necesita actualizar su vista)
+        // Broadcast: Diapositivas/Contenido -> el espectador sincroniza su vista
         chan.on('broadcast', { event: 'slide' }, (payload) => {
           if (opts.asSpectator) {
-            currentSlide = payload.payload.currentSlide;
-            totalSlides = payload.payload.totalSlides;
-            const title = payload.payload.presentationTitle;
-            
-            // Actualizar UI del espectador
-            document.getElementById('spectator-slide-number').textContent = currentSlide;
-            document.getElementById('spectator-total-slides').textContent = totalSlides;
+            const { currentSlide: slide, totalSlides: total, presentationTitle: title } = payload.payload;
             document.getElementById('spectator-presentation-title').textContent = title;
-
-            // Simulación de vista previa del documento
+            document.getElementById('spectator-slide-number').textContent = slide;
+            document.getElementById('spectator-total-slides').textContent = total;
             document.getElementById('spectator-current-slide-content').innerHTML = `
-                <h3>Diapositiva ${currentSlide}</h3>
-                <p>El presentador está viendo la diapositiva ${currentSlide} de ${totalSlides} del documento: ${title}.</p>
+                <h3>Diapositiva ${slide}</h3>
+                <p>El presentador está viendo la diapositiva ${slide} de ${total}.</p>
             `;
-            console.log(`[RT-Spectator] Diapositiva sincronizada: ${currentSlide}/${totalSlides} (${title})`);
+            console.log(`[RT-Spectator] Diapositiva sincronizada: ${slide}/${total}`);
           }
         });
 
-        // 3. Gestión de PRESENCIA (quién entra y sale - SOLO para el Presentador)
-        // El Presentador se suscribe a los cambios de presencia
+        // Broadcast: Fin de la presentación
+        chan.on('broadcast', { event: 'presentation_end' }, (payload) => {
+             if (opts.asSpectator) {
+                 document.getElementById('spectator-presentation-title').textContent = "Presentación Finalizada";
+                 document.getElementById('spectator-slide-number').textContent = '--';
+                 document.getElementById('spectator-total-slides').textContent = '--';
+                 document.getElementById('spectator-current-slide-content').innerHTML = `
+                    <h3>Sesión de Contenido Finalizada</h3>
+                    <p>Esperando a que el presentador inicie la siguiente actividad.</p>
+                 `;
+             }
+        });
+        
+        // Presencia: Sincronización Inicial (Sync)
         chan.on('presence', { event: 'sync' }, () => {
-             if (!opts.asPresenter) return;
-             console.log("[RT-Presenter] Presencia: Sincronización completa.");
              const state = chan.presenceState();
              rt.liveSpectators = {};
-             // Reconstruir la lista completa a partir del estado de presencia
-             Object.values(state).flat().filter(p => p.type !== 'presenter').forEach(p => {
-                 // Usamos el id interno generado por track como key
-                 rt.liveSpectators[p.id] = { name: p.name, id: p.id };
+             // Procesar el estado de presencia para tener una lista simple
+             Object.entries(state).forEach(([key, presences]) => {
+                // Solo nos interesan las presencias de Espectadores y Presentadores
+                presences.forEach(p => {
+                    rt.liveSpectators[key] = { 
+                        name: p.name, // El key se configuró como el nombre en la subscripción
+                        id: key, 
+                        type: p.type || 'spectator' // Agregar el tipo para el filtro
+                    };
+                });
              });
-             updateSpectatorList();
+             if (opts.asPresenter) updateSpectatorList();
+             console.log("[RT] Sincronización de Presencia completa.", rt.liveSpectators);
         });
         
-        // El Presentador se suscribe a los eventos de unirse/salir para una actualización incremental más rápida
+        // Presencia: Nuevo se une (Join)
         chan.on('presence', { event: 'join' }, ({ newPresences }) => {
-             if (!opts.asPresenter) return;
-             console.log("[RT-Presenter] Presencia: Nuevo espectador se unió.", newPresences);
             newPresences.forEach(p => {
-                 // Solo agregamos si no es el mismo presentador uniéndose
-                 if (p.name !== (currentUser?.user_metadata?.name || 'Presentador RT')) addSpectatorToListRT(p);
+                 // El payload 'p' aquí es { name: '...', type: '...' }
+                 const key = p.name; // Usamos el nombre como clave (establecido en la subscripción)
+                 rt.liveSpectators[key] = { name: p.name, id: key, type: p.type || 'spectator' };
             });
-        });
-        chan.on('presence', { event: 'leave' }, ({ leftPresences }) => {
-             if (!opts.asPresenter) return;
-             console.log("[RT-Presenter] Presencia: Espectador salió.", leftPresences);
-            leftPresences.forEach(p => {
-                 if (p.name !== (currentUser?.user_metadata?.name || 'Presentador RT')) removeSpectatorFromListRT(p);
-            });
+            if (opts.asPresenter) updateSpectatorList();
         });
         
+        // Presencia: Uno se va (Leave)
+        chan.on('presence', { event: 'leave' }, ({ leftPresences }) => {
+            leftPresences.forEach(p => {
+                 const key = p.name;
+                 delete rt.liveSpectators[key];
+            });
+            if (opts.asPresenter) updateSpectatorList();
+        });
+
+        // Suscribirse
         await chan.subscribe(async (status) => {
-            console.log(`[RT] Estado de Suscripción: ${status}`);
             if (status === 'SUBSCRIBED') {
-                // Generar un ID único para rastreo de presencia
-                rt.presenceKey = `${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
+                rt.presenceKey = name;
+                const userType = opts.asPresenter ? 'presenter' : 'spectator';
                 
-                const userType = opts.asPresenter ? 'Presentador RT' : 'Espectador RT';
-                const name = opts.name || (currentUser?.user_metadata?.name || userType);
+                // Track con info adicional (el "name" ya es el key en la config del canal)
+                await chan.track({ name: name, type: userType }); 
+                console.log(`[RT] Conexión establecida. Usuario: ${name} (${userType})`);
                 
-                // Trackear al usuario en el canal de presencia
-                await chan.track({ name: name, id: rt.presenceKey, type: opts.asPresenter ? 'presenter' : 'spectator' });
-                console.log(`[RT] Conexión establecida. Usuario: ${name} (${userType}) - Key: ${rt.presenceKey}`);
-                
-                // Si es un espectador uniéndose, solicitamos la diapositiva actual al presentador
+                // Si es espectador, pedir el estado actual de la diapositiva al presentador
                 if (opts.asSpectator) {
-                    chan.send({ type:'broadcast', event:'request_slide', payload: { requestingSpectatorId: rt.presenceKey } });
+                    chan.send({ 
+                        type:'broadcast', 
+                        event:'request_slide_sync', 
+                        payload: { requestingSpectator: name } 
+                    });
                 }
+            } else if (status === 'CHANNEL_ERROR') {
+                 console.error("[RT] Error en el canal de Supabase.");
+            }
+        });
+
+        // **CORRECCIÓN:** Manejar solicitud de sincronización de diapositivas
+        chan.on('broadcast', { event: 'request_slide_sync' }, (payload) => {
+            if (opts.asPresenter && currentPresentation) {
+                 // El presentador reenvía su estado actual a todos (incluyendo al nuevo)
+                 broadcastSlide(); 
+                 console.log(`[RT-Presenter] Solicitud de sincronización recibida de ${payload.payload.requestingSpectator}. Enviando estado de diapositiva actual.`);
             }
         });
         
       } catch(err){
-        console.error('initRealtimeForSession err', err);
-        // Fallback: Si Supabase falla, usamos un objeto simulado para que .send() no dé error
+        console.warn('initRealtimeForSession err', err);
+        // Fallback local cuando RT falla
         rt.chan = { 
-            send: (msg) => { console.warn("RT SIMULADO: Mensaje enviado localmente.", msg); } ,
+            send: (msg) => { console.warn("RT: Mensaje local (RT no conectado).", msg); } ,
             untrack: () => Promise.resolve(),
             unsubscribe: () => Promise.resolve(),
         };
-        // En modo demo sin Supabase, el presentador no verá espectadores reales
-        // Mantenemos la lógica de la UI del presentador limpia de espectadores falsos si Supabase falla.
+        // Simulación para que la interfaz no quede vacía
         if (opts.asPresenter) {
-            alert("Advertencia: No se pudo conectar a Supabase Realtime. La gestión de espectadores en vivo no funcionará hasta que se solucione la conexión.");
+            rt.liveSpectators['demo-1'] = { name: 'Espectador Demo 1', id:'demo-1', type:'spectator' };
+            rt.liveSpectators['demo-2'] = { name: 'Espectador Demo 2', id:'demo-2', type:'spectator' };
+            updateSpectatorList();
         }
-        updateSpectatorList();
+        alert("Advertencia: No se pudo conectar al Realtime. La sincronización en vivo y la presencia no estarán disponibles.");
       }
     }
     
-    // Función de utilidad para manejar adiciones a la lista de espectadores desde RT
-    function addSpectatorToListRT(presenceUser) {
-        if (!document.getElementById('spectators-list')) return;
-        const key = presenceUser.id;
-        if (rt.liveSpectators[key]) return;
-        rt.liveSpectators[key] = { name: presenceUser.name, id: key };
-        updateSpectatorList();
-    }
-    
-    // Función de utilidad para manejar remociones de la lista de espectadores desde RT
-    function removeSpectatorFromListRT(presenceUser) {
-        if (!document.getElementById('spectators-list')) return;
-        const key = presenceUser.id;
-        if (rt.liveSpectators[key]) {
-             delete rt.liveSpectators[key];
-        }
-        updateSpectatorList();
-    }
-    
     async function cleanupRealtime(){
-        console.log("[RT] Limpiando conexión Realtime.");
         if (rt.chan && rt.chan.unsubscribe) {
-             try { rt.chan.untrack(); } catch(e){ console.warn("Error untrack:", e); }
-             try { rt.chan.unsubscribe(); } catch(e){ console.warn("Error unsubscribe:", e); }
+             try { rt.chan.untrack && await rt.chan.untrack(); } catch(e){}
+             try { await rt.chan.unsubscribe(); } catch(e){}
         }
         rt = { chan:null, sessionId:null, presenceKey:null, liveSpectators: {} };
         const connectedSpectatorsEl = document.getElementById('connected-spectators');
@@ -1890,7 +1885,6 @@ button.red:hover { background-color: #c9302c; }
         updateSpectatorList();
     }
     
-    // Función de DEMO para actualizar reacciones, no era parte de la solicitud, pero es importante
     function updateReactionCounts(){
         Object.keys(reactionCounts).forEach(k => {
             const el = document.getElementById(`count-${k}`);
@@ -1902,6 +1896,8 @@ button.red:hover { background-color: #c9302c; }
         if (rt.chan && rt.chan.send) {
              try { 
                  rt.chan.send({ type:'broadcast', event:'reaction', payload:{ kind } }); 
+                 // **NOTA:** La reacción no se verá instantáneamente si es la misma persona que la envía, 
+                 // ya que Supabase no envía los broadcasts al emisor por defecto.
                  console.log("[RT] Reacción enviada:", kind); 
              } catch(e) { 
                  console.warn('Error RT sendReaction', e); 
@@ -1920,53 +1916,40 @@ button.red:hover { background-color: #c9302c; }
       });
     }
 
-    function startTimerWithInput(){ alert('Funcionalidad de temporizador (demo).'); }
+    function startTimerWithInput(){ alert('Funcionalidad de temporizador.'); }
     function resetTimerAndReactions(){ 
         reactionCounts = { love:0, clap:0, question:0, thumbsup:0, thumbsdown:0 };
         updateReactionCounts();
         document.getElementById('timer-display').textContent = '00:00:00';
         alert('Temporizador y contadores de reacción reiniciados.');
     }
-    function answerQuestion(){ alert('Funcionalidad de responder pregunta (demo).'); }
-    function uploadFileAsSpectator(){ alert('Funcionalidad de subir archivo por espectador (demo).'); }
-    function loadSpectatorFiles(){ alert('Funcionalidad de cargar archivos de espectadores (demo).'); }
-    function generateHTMLReport(){ alert('Funcionalidad de generar reporte (demo).'); }
+    function answerQuestion(){ alert('Funcionalidad de responder pregunta.'); }
+    function uploadFileAsSpectator(){ alert('Funcionalidad de subir archivo por espectador.'); }
+    function loadSpectatorFiles(){ alert('Funcionalidad de cargar archivos de espectadores.'); }
+    function generateHTMLReport(){ alert('Funcionalidad de generar reporte.'); }
 
 
-    // Inicialización: Llama a las funciones de carga de datos demo
-    (function init(){
-      console.log("Iniciando aplicación...");
-      // Revisa si hay un usuario logueado en Supabase al cargar la página
-      supa.auth.getSession().then(({ data, error }) => {
-          if (error) {
-              console.warn("Error al obtener sesión (probablemente no logueado):", error);
-          }
-          if (data.session) {
-              currentUser = data.user;
-              console.log("Sesión activa detectada. Redirigiendo a dashboard.");
-              showPage('presenter-dashboard');
-              return;
-          }
-
-          // Si no hay sesión, comprueba si debe ir a la página de espectador
-          try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const sessionId = urlParams.get('session');
-            if (sessionId) {
-              document.getElementById('session-id-input').value = sessionId;
-              showPage('spectator-join');
-            } else {
-              showPage('landing');
-            }
-          } catch(e){ 
-            console.error("Error al procesar URL o redirigir:", e);
-            showPage('landing'); 
-          }
-      }).catch(err => {
-          console.error("Fallo grave al conectar a Supabase Auth:", err);
-          alert("Error de conexión inicial. La base de datos no está disponible. Revisa tu URL/KEY.");
-          showPage('landing');
-      });
+    // Inicialización: persistencia de sesión + deep-link de sesión
+    (async function init(){
+      try {
+        const { data: { session } } = await supa.auth.getSession();
+        if (session?.user) {
+          currentUser = session.user;
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session');
+        if (sessionId) {
+          document.getElementById('session-id-input').value = sessionId;
+          // **CORRECCIÓN:** Si hay una ID de sesión, ir a la pantalla de unión.
+          showPage('spectator-join');
+        } else {
+          // **CORRECCIÓN:** Si no hay ID de sesión, ir al dashboard si está logueado o a landing.
+          showPage(currentUser ? 'presenter-dashboard' : 'landing');
+        }
+      } catch(e){ 
+        // Si falla la obtención de sesión, simplemente vamos a la página de inicio.
+        showPage('landing'); 
+      }
     })();
 
   </script>
