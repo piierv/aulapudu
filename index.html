@@ -383,7 +383,6 @@ button.red:hover { background-color: #c9302c; }
   margin-bottom: 15px;
   background: var(--bg-top);
   padding: 5px 10px;
-  border-radius: 8px;
   display: inline-block;
 }
 
@@ -654,6 +653,25 @@ button.red:hover { background-color: #c9302c; }
   margin-top: 0;
   font-size: 22px;
 }
+/* Nuevo estilo para el botón de pantalla completa */
+.fullscreen-toggle {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    background: rgba(19, 68, 51, 0.7); /* dark green semi-transparent */
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    transition: background 0.2s;
+    z-index: 10;
+}
+.fullscreen-toggle:hover {
+    background: var(--text-dark);
+}
 
 /* Interacciones */
 .spectator-interactions-section {
@@ -711,6 +729,7 @@ button.red:hover { background-color: #c9302c; }
   .spectator-interactions button { width: 45px; height: 45px; font-size: 20px; }
   .spectator-cta-grid { grid-template-columns: 1fr; }
   .spectator-input-card { margin: 20px auto; }
+  .fullscreen-toggle { top: 15px; right: 15px; padding: 8px; font-size: 16px; }
 }
 /* --- FIN: CSS EXTENDIDO Y PROFESIONAL PARA PANTALLAS INTERNAS --- */
   </style>
@@ -1039,7 +1058,9 @@ button.red:hover { background-color: #c9302c; }
             <div class="slide-counter">Diapositiva <span id="spectator-slide-number">--</span> de <span id="spectator-total-slides">--</span></div>
         </div>
 
-        <div class="spectator-presentation-area">
+        <div id="presentation-fullscreen-wrapper" class="spectator-presentation-area">
+          <button class="fullscreen-toggle" onclick="toggleFullscreen()">&#x26F6;</button> 
+
           <div class="slide-content-wrapper">
             <div id="spectator-current-slide-content" class="spectator-slide-placeholder">
               <h3>Esperando al Presentador</h3>
@@ -1092,9 +1113,10 @@ button.red:hover { background-color: #c9302c; }
     let totalSlides = 10; 
     let questionType = 'multiple-choice';
     let reactionCounts = { love:0, clap:0, question:0, thumbsup:0, thumbsdown:0 };
+    let spectatorReactionLimits = { love: 0, clap: 0, question: 0, thumbsup: 0, thumbsdown: 0 }; // Límite por espectador/diapositiva
     let timerInterval = null, timerSeconds = 0;
     let pdfDoc = null; 
-    let currentFileUrl = null; // Almacena la URL PÚBLICA de Supabase
+    let currentFileUrl = null; 
     let currentFile = null; 
     let fileType = null;
     let rt = { chan: null, sessionId: null, presenceKey: null, liveSpectators: {} };
@@ -1241,7 +1263,7 @@ button.red:hover { background-color: #c9302c; }
 
       if (password !== confirm) {
         errBox.textContent = 'Las contraseñas no coinciden.';
-        return;
+          return;
       }
 
       try {
@@ -1572,7 +1594,6 @@ button.red:hover { background-color: #c9302c; }
         
         const fileRecord = uploadedFiles[type].find(f => f.name === name);
         if (fileRecord && fileRecord.supabaseUrl) {
-            // Generar la ruta exacta del archivo en Supabase Storage
             const pathSegments = fileRecord.supabaseUrl.split('/').slice(-2);
             const filePath = pathSegments.join('/'); 
 
@@ -1611,7 +1632,6 @@ button.red:hover { background-color: #c9302c; }
            return;
       }
 
-      // Carpeta de usuario/NombreArchivo-Timestamp.ext
       const filePath = `${user.id}/${file.name}-${Date.now()}.${fileExt}`; 
 
       try {
@@ -1703,7 +1723,6 @@ button.red:hover { background-color: #c9302c; }
 
       if (isPDF) {
           try {
-            // El presentador carga el PDF usando la URL pública
             pdfDoc = await pdfjsLib.getDocument(currentFileUrl).promise;
             totalSlides = pdfDoc.numPages;
             await renderPDFPage(1, 'pdf-canvas'); 
@@ -1978,6 +1997,11 @@ button.red:hover { background-color: #c9302c; }
           if (opts.asSpectator) {
             const { currentSlide: slide, totalSlides: total, presentationTitle: title, fileType: type, fileUrl: url } = payload.payload;
             
+            // Reiniciar límites de reacción al cambiar de diapositiva
+            if (slide !== currentSlide) {
+                spectatorReactionLimits = { love: 0, clap: 0, question: 0, thumbsup: 0, thumbsdown: 0 };
+            }
+
             // 1. Actualizar títulos
             document.getElementById('spectator-presentation-title').textContent = title;
             document.getElementById('spectator-slide-number').textContent = slide;
@@ -2027,6 +2051,9 @@ button.red:hover { background-color: #c9302c; }
                 `;
                 placeholder.style.display = 'block';
             }
+            
+            currentSlide = slide; // Actualizar el slide local del espectador
+
           }
         });
 
@@ -2149,12 +2176,24 @@ button.red:hover { background-color: #c9302c; }
             if (el) el.textContent = reactionCounts[k];
         });
     }
+
+    // **Lógica de Envío de Reacción con Límite por Diapositiva**
     function sendReaction(kind){
         if (!rt.chan) return alert('Debes unirte a una sesión para enviar reacciones.');
+        
+        if (spectatorReactionLimits[kind] >= 2) {
+             alert(`Límite alcanzado: Solo puedes enviar 2 reacciones "${kind}" por diapositiva.`);
+             return;
+        }
+
         if (rt.chan && rt.chan.send) {
              try { 
                  rt.chan.send({ type:'broadcast', event:'reaction', payload:{ kind } }); 
                  console.log("[RT] Reacción enviada:", kind); 
+                 
+                 // Incrementar el límite localmente
+                 spectatorReactionLimits[kind]++;
+
              } catch(e) { 
                  console.warn('Error RT sendReaction', e); 
              }
@@ -2170,6 +2209,29 @@ button.red:hover { background-color: #c9302c; }
       return String(str).replace(/[&<>"'`=\/]/g, function(s) {
         return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'})[s];
       });
+    }
+
+    // **Nueva Función: Pantalla Completa para Espectador**
+    function toggleFullscreen() {
+        const wrapper = document.getElementById('presentation-fullscreen-wrapper');
+
+        if (!document.fullscreenElement) {
+            if (wrapper.requestFullscreen) {
+                wrapper.requestFullscreen();
+            } else if (wrapper.webkitRequestFullscreen) { /* Safari */
+                wrapper.webkitRequestFullscreen();
+            } else if (wrapper.msRequestFullscreen) { /* IE11 */
+                wrapper.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE11 */
+                document.msExitFullscreen();
+            }
+        }
     }
 
     function startTimerWithInput(){ alert('Funcionalidad de temporizador.'); }
