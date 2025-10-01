@@ -825,10 +825,9 @@ button.red:hover { background-color: #c9302c; }
             </div>
 
             <div class="dashboard-card fade-in">
-              <h4><span class="sidebar-icon">📈</span> Actividad Reciente</h4>
-              <p>5 nuevos espectadores se unieron a la presentación 'Introducción a la IA'.</p>
-              <p>Resultados del quiz exportados para 'Revisión del Módulo 1'.</p>
-              <button onclick="showPresenterContent('reports')">Ver Toda la Actividad</button>
+              <h4><span class="sidebar-icon">🚪</span> Finalizar Sesión Globalmente</h4>
+              <p>Elimina permanentemente la sesión de la base de datos y desconecta a todos los espectadores.</p>
+              <button class="red" onclick="deleteSessionGlobally()">Finalizar y Borrar Sesión</button>
             </div>
           </div>
         </div>
@@ -1063,7 +1062,7 @@ button.red:hover { background-color: #c9302c; }
             <div class="spectator-cta-grid">
               <button onclick="answerQuestion()">Responder Pregunta</button>
               <button onclick="uploadFileAsSpectator()">Subir Archivo al Presentador</button>
-              <button>Descargar Material de Estudio</button>
+              <button onclick="leaveSession()">Salir de la Sesión</button>
             </div>
         </div>
       </div>
@@ -1076,6 +1075,7 @@ button.red:hover { background-color: #c9302c; }
      * CONFIG
      ************************************************************************/
     // **IMPORTANTE:** Reemplaza estos valores con la configuración real de tu proyecto Supabase.
+    // Asumo la existencia de una tabla 'sessions' con columnas: session_id (TEXT, PK), presentor_uid (UUID)
     const SUPABASE_URL = "https://gxgbtnmqdghixfaamsad.supabase.co"; 
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z2J0bm1xZGdoaXhmYWFtc2FkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNzAzMjgsImV4cCI6MjA3NDg0NjMyOH0.0dMTZONs7EDqWPFOV9M3gCUJKjdMBt9xdlLuQk13Jao"; 
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1091,14 +1091,14 @@ button.red:hover { background-color: #c9302c; }
     let questionType = 'multiple-choice';
     let reactionCounts = { love:0, clap:0, question:0, thumbsup:0, thumbsdown:0 };
     let timerInterval = null, timerSeconds = 0;
-    let pdfDoc = null; // PDF Doc para el Presentador (solo usado si el archivo es un PDF)
+    let pdfDoc = null; 
     let currentFileUrl = null;
-    let currentFile = null; // **NUEVO:** Almacena el objeto File (solo para el Presentador)
+    let currentFile = null; 
     let fileType = null;
     let rt = { chan: null, sessionId: null, presenceKey: null, liveSpectators: {} };
     let isPresenter = false;
     
-    let spectatorPdfDoc = null; // PDF Doc para el Espectador
+    let spectatorPdfDoc = null; 
     
     let uploadedFiles = {
       presentations: [],
@@ -1186,7 +1186,6 @@ button.red:hover { background-color: #c9302c; }
         document.getElementById('current-slide').textContent = currentSlide;
         document.getElementById('current-presentation-title').textContent = currentPresentation || '--';
         
-        // **Lógica de Previsualización para Presentador**
         if (fileType === 'pdf' && pdfDoc) {
              renderPDFPage(currentSlide, 'pdf-canvas');
         } else {
@@ -1293,6 +1292,19 @@ button.red:hover { background-color: #c9302c; }
         generateQrCode(code);
         document.getElementById('session-id-display').textContent = code;
 
+        // **NUEVO: Insertar la sesión en Supabase**
+        const { error: insertError } = await supa
+            .from('sessions') 
+            .insert([{ session_id: code, presentor_uid: userId }]);
+        
+        if (insertError) {
+             console.error('Error insertando sesión:', insertError);
+             alert('Error creando sesión en DB: ' + insertError.message);
+             currentSessionCode = null; // Fallback
+             return;
+        }
+
+
         await initRealtimeForSession(currentSessionCode, { asPresenter: true });
         
         alert(`Nueva sesión creada: ${currentSessionCode}. ¡El panel de control en tiempo real está activo!`);
@@ -1311,7 +1323,7 @@ button.red:hover { background-color: #c9302c; }
         const confirmEnd = confirm(`¿Deseas finalizar la presentación de contenido "${currentPresentation}"? Esto te permitirá cargar una nueva presentación.`);
         if (!confirmEnd) return;
 
-        // Limpiar variables de estado
+        // Limpiar variables de estado (solo el contenido, no la sesión RT)
         currentPresentation = null;
         currentSlide = 1;
         totalSlides = 1;
@@ -1343,6 +1355,51 @@ button.red:hover { background-color: #c9302c; }
         alert('Presentación de contenido finalizada. Puedes cargar una nueva presentación desde la sección "Presentaciones".');
     }
 
+    async function deleteSessionGlobally(){
+        if (!currentSessionCode) {
+            return alert('No hay ninguna sesión activa para finalizar globalmente.');
+        }
+        if (!currentUser) {
+            return alert('Debes iniciar sesión para borrar la sesión.');
+        }
+
+        const confirmDelete = confirm(`¿Estás SEGURO de que deseas FINALIZAR Y BORRAR la sesión "${currentSessionCode}"? Esto la eliminará permanentemente de la base de datos y desconectará a todos.`);
+        if (!confirmDelete) return;
+
+        try {
+            // 1. Notificar a todos los espectadores para que se desconecten
+            if (rt.chan && rt.chan.send) {
+                rt.chan.send({ type:'broadcast', event:'session_delete', payload:{ message: 'Sesión terminada por el presentador.' } }); 
+                console.log("[RT] Broadcast de borrado de sesión enviado."); 
+            }
+            
+            // 2. Borrar de la base de datos
+            const { error: deleteError } = await supa
+                .from('sessions')
+                .delete()
+                .eq('session_id', currentSessionCode)
+                .eq('presentor_uid', currentUser.id); // Seguridad RLS: solo borra si es el dueño.
+
+            if (deleteError) {
+                alert('Error al borrar la sesión de la base de datos. Verifica RLS y propiedad: ' + deleteError.message);
+                return; 
+            }
+            
+            // 3. Limpiar estado local y desconectar RT
+            await cleanupRealtime();
+            currentSessionCode = null;
+            showPage('presenter-dashboard'); // Volver al dashboard
+            document.getElementById('session-id-display').textContent = '--';
+            document.getElementById('qr-code-img').style.display = 'none';
+
+            alert('¡Sesión finalizada y borrada exitosamente!');
+
+        } catch (err) {
+            console.error('Error borrando sesión globalmente:', err);
+            alert('Error crítico al finalizar la sesión.');
+        }
+    }
+
 
     /************************************************************************
      * ASISTENCIA / GESTIÓN DE ESPECTADORES (RT)
@@ -1354,6 +1411,24 @@ button.red:hover { background-color: #c9302c; }
       
       if (sessionCode.substring(0, 9) !== 'AULAPUDU-') return alert('ID de Sesión no válido.');
 
+      // **NUEVO: Verificar existencia de sesión**
+      try {
+        const { data, error } = await supa
+            .from('sessions')
+            .select('session_id')
+            .eq('session_id', sessionCode)
+            .maybeSingle();
+
+        if (error || !data) {
+             alert('La sesión no existe o ha sido finalizada por el presentador.');
+             return;
+        }
+      } catch (e) {
+          console.error("Error verificando sesión:", e);
+          alert('Error al verificar la sesión.');
+          return;
+      }
+      
       try {
         currentSessionCode = sessionCode;
         
@@ -1371,6 +1446,16 @@ button.red:hover { background-color: #c9302c; }
       }
     }
 
+    function leaveSession() {
+        if (rt.chan) {
+            alert("Has abandonado la sesión de AulaPudu.");
+            cleanupRealtime();
+            showPage('spectator-join');
+        } else {
+            showPage('spectator-join');
+        }
+    }
+    
     async function updateSpectatorList(){
         const list = document.getElementById('spectators-list');
         const countDisplay = document.getElementById('active-spectators');
@@ -1501,7 +1586,6 @@ button.red:hover { background-color: #c9302c; }
              return;
         }
 
-        // **CORRECCIÓN:** Asegurarse de guardar el objeto File en la lista
         uploadedFiles.presentations.push({ name: file.name, type: fileExt, url: fileUrl, file: file });
         
         loadPresentationsListUI();
@@ -1566,7 +1650,6 @@ button.red:hover { background-color: #c9302c; }
           const fileData = uploadedFiles.presentations.find(p => p.name === title);
           if (fileData && fileData.file) {
              try {
-                // **CORRECCIÓN:** Usar el objeto File almacenado para la carga
                 currentFile = fileData.file;
                 pdfDoc = await pdfjsLib.getDocument({ data: await currentFile.arrayBuffer() }).promise;
                 totalSlides = pdfDoc.numPages;
@@ -1602,8 +1685,6 @@ button.red:hover { background-color: #c9302c; }
 
     /**
      * Función unificada de renderizado de PDF
-     * @param {number} pageNumber - Número de página/diapositiva a renderizar
-     * @param {string} canvasId - ID del elemento canvas (pdf-canvas o spectator-pdf-canvas)
      */
     async function renderPDFPage(pageNumber, canvasId){
       const doc = (canvasId === 'pdf-canvas') ? pdfDoc : spectatorPdfDoc;
@@ -1613,12 +1694,10 @@ button.red:hover { background-color: #c9302c; }
       const canvas = document.getElementById(canvasId);
       const context = canvas.getContext('2d');
       
-      // Ajustar el ancho del contenedor para el cálculo del escalado
       let containerWidth;
       if (canvasId === 'pdf-canvas') {
         containerWidth = document.getElementById('pdf-viewer-container').clientWidth - 40;
       } else {
-        // Usamos el ancho del contenedor padre (slide-content-wrapper)
         containerWidth = canvas.parentElement.clientWidth - 40; 
       }
 
@@ -1632,7 +1711,6 @@ button.red:hover { background-color: #c9302c; }
       const renderContext = { canvasContext: context, viewport };
       await page.render(renderContext).promise;
       
-      // Mostrar el canvas y ocultar el placeholder/non-pdf-content
       canvas.style.display = 'block';
       const placeholderId = (canvasId === 'pdf-canvas') ? 'current-slide-content' : 'spectator-current-slide-content';
       
@@ -1665,7 +1743,6 @@ button.red:hover { background-color: #c9302c; }
       }
     }
     function updateSlide(){
-        // Lógica de visualización para tipos de archivo no-PDF (simulación)
         const contentHTML = `
             <h3>Diapositiva ${currentSlide}</h3>
             <p>Contenido de la diapositiva ${currentSlide} de la presentación (${fileType.toUpperCase()}).</p>
@@ -1688,8 +1765,7 @@ button.red:hover { background-color: #c9302c; }
                     totalSlides,
                     presentationTitle: currentPresentation || "Sesión en Vivo",
                     fileType: fileType, 
-                    // **CORRECCIÓN CRÍTICA:** Solo se puede enviar la URL temporal.
-                    // El espectador NO podrá cargarla, pero sabrá que hay un PDF.
+                    // Enviar URL local; el espectador recibirá error pero sabrá los metadatos.
                     fileUrl: currentFileUrl, 
                 } 
             }); 
@@ -1866,11 +1942,11 @@ button.red:hover { background-color: #c9302c; }
             nonPdfContent.style.display = 'none';
 
             if (type === 'pdf' && url && window.pdfjsLib) {
-                 // **CORRECCIÓN DE ESPECTADOR:** Mostrar error o simulación, ya que la URL local no funciona
+                 // **MENSAJE CRÍTICO:** Informar al espectador sobre la limitación (ya que no puede acceder a la URL local del presentador)
                  nonPdfContent.innerHTML = `
                       <h3>⚠️ Error de Carga para Espectador</h3>
-                      <p>No se pudo cargar el archivo PDF. La previsualización de archivos locales (PDF) solo está disponible para el presentador.</p>
-                      <small>El presentador está viendo la diapositiva ${slide} de ${total}.</small>
+                      <p>No se pudo cargar el archivo PDF (${title}). La previsualización de archivos locales solo está disponible para el presentador. El presentador está viendo la diapositiva ${slide} de ${total}.</p>
+                      <small>Siga el avance del presentador usando los números de diapositiva.</small>
                  `;
                  nonPdfContent.style.display = 'block';
 
@@ -1884,7 +1960,6 @@ button.red:hover { background-color: #c9302c; }
                  `;
                  nonPdfContent.style.display = 'block';
                  
-                 // Limpiar canvas por si acaso
                  const ctx = canvas.getContext('2d');
                  ctx.clearRect(0, 0, canvas.width, canvas.height);
             } else {
@@ -1912,6 +1987,16 @@ button.red:hover { background-color: #c9302c; }
                  document.getElementById('spectator-non-pdf-content').style.display = 'none';
              }
         });
+        
+        // **NUEVO: Manejar borrado de sesión globalmente**
+        chan.on('broadcast', { event: 'session_delete' }, (payload) => {
+             if (opts.asSpectator) {
+                 alert('La sesión ha sido finalizada por el presentador.');
+                 cleanupRealtime();
+                 showPage('spectator-join'); 
+             }
+        });
+
         
         chan.on('presence', { event: 'sync' }, () => {
              const state = chan.presenceState();
