@@ -46,8 +46,8 @@ body{
   justify-content:space-between;
   align-items:center;
   padding:36px 72px 0 72px;
-  position: relative; /* Asegura un contexto para z-index */
-  z-index: 10; /* Asegura que esté por encima del pudu-big */
+  position: relative; 
+  z-index: 10; 
 }
 .brand{
   display:flex;
@@ -62,7 +62,7 @@ body{
 }
 .logo{
   width:56px;
-  height:auto; /* mantiene proporción */
+  height:auto; 
 }
 
 /* Nav */
@@ -81,10 +81,10 @@ body{
   overflow:hidden;
 }
 .pudu-big {
-  position: fixed;     /* en vez de absolute */
+  position: fixed;     
   left: 0;
   bottom: 0;
-  height: 90vh;       /* ocupa toda la altura visible */
+  height: 90vh;       
   width: auto;
   object-fit: contain;
   pointer-events: none;
@@ -92,7 +92,6 @@ body{
   z-index: 1;
   opacity: 0.5;
 }
-
 
 
 /* Content block */
@@ -137,7 +136,7 @@ body{
   font-size:28px;
   font-weight:800;
   color:var(--text-dark);
-  transition: all 0.2s; /* Added transition */
+  transition: all 0.2s; 
 }
 .cta:hover {
   transform: translateY(-2px);
@@ -145,7 +144,7 @@ body{
 }
 .cta-icon{
   width:72px;
-  height:auto; /* mantiene proporción */
+  height:auto; 
   flex-shrink:0;
   object-fit:contain;
 }
@@ -162,7 +161,7 @@ button.red:hover { background-color: #c9302c; }
   .hero-content{width:80%}
   .headline{font-size:44px}
   .cta{min-width:360px; font-size:22px}
-  .pudu-big{max-width:65%} /* más grande también en pantallas medianas */
+  .pudu-big{max-width:65%} 
 }
 @media (max-width:640px){
   .site-header{padding:20px}
@@ -183,7 +182,7 @@ button.red:hover { background-color: #c9302c; }
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 72px 80px 72px; /* Espacio para que el footer no quede pegado */
+  padding: 0 72px 80px 72px; 
 }
 .container-panel { margin-top: 24px; }
 .hidden { display: none !important; }
@@ -268,12 +267,11 @@ button.red:hover { background-color: #c9302c; }
 
 /* Dashboard Layout */
 .presenter-dashboard {
-  /* Asegura que la barra lateral y el contenido estén uno al lado del otro */
   display: flex; 
   gap: 30px;
   width: 100%; 
   max-width: 1200px;
-  align-items: flex-start; /* Alinea los elementos al inicio (arriba) */
+  align-items: flex-start; 
 }
 
 .sidebar {
@@ -447,7 +445,7 @@ button.red:hover { background-color: #c9302c; }
 .timer-display {
   font-size: 22px;
   font-weight: 800;
-  color: #d9534f; /* Rojo para el contador */
+  color: #d9534f; 
   margin-left: 10px;
   padding: 5px 10px;
   border: 2px solid #d9534f;
@@ -585,50 +583,134 @@ button.red:hover { background-color: #c9302c; }
   transform: translateY(-1px);
 }
 
+/* ======================================= */
+/* Spectator Interface (MEJORADO 1000%) */
+/* ======================================= */
 .spectator-interface {
   max-width: 900px;
   margin: 30px auto;
-  padding: 30px;
+  padding: 0; /* Eliminado el padding del contenedor principal */
   background-color: white;
   border-radius: var(--radius);
   box-shadow: 0 6px 15px rgba(18,60,50,0.08);
   text-align: center;
 }
+.spectator-header {
+  background-color: var(--green);
+  color: white;
+  padding: 20px 30px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  text-align: left;
+}
+.spectator-header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+.slide-counter {
+  font-weight: 600;
+  color: var(--bg-top); /* Texto más claro sobre fondo verde */
+  margin-top: 5px;
+  font-size: 16px;
+}
+
 .spectator-presentation-area {
   background-color: #f5f5f5;
   padding: 20px;
-  border-radius: 12px;
-  margin-top: 20px;
+  margin: 0 0 20px 0;
   min-height: 400px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  border-radius: 0 0 12px 12px;
+  position: relative;
 }
-.spectator-presentation-area h3 { color: var(--text-dark); }
-.slide-counter {
-  font-weight: 600;
-  color: var(--muted);
-  margin-top: 15px;
+
+/* Contenido de la diapositiva */
+.slide-content-wrapper {
+  width: 100%;
+  max-width: 700px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.spectator-slide-pdf-canvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+.spectator-slide-placeholder {
+  padding: 30px;
+}
+.spectator-slide-placeholder h3 {
+  color: var(--text-dark);
+  margin-top: 0;
+  font-size: 22px;
+}
+
+/* Interacciones */
+.spectator-interactions-section {
+    padding: 20px;
+    border-top: 1px solid #eee;
 }
 .spectator-interactions {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  margin-top: 30px;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 .spectator-interactions button {
   background: var(--bg-top);
   border: 2px solid var(--green);
   border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  font-size: 28px;
+  width: 55px;
+  height: 55px;
+  font-size: 24px;
   cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: transform 0.1s, box-shadow 0.1s, border-color 0.1s;
 }
 .spectator-interactions button:active {
   transform: scale(0.95);
   box-shadow: 0 0 0 5px rgba(136, 193, 178, 0.5);
+  border-color: var(--yellow);
+}
+
+.spectator-cta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+.spectator-cta-grid button {
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    width: 100%;
+}
+.spectator-cta-grid button:nth-child(1) { background-color: var(--yellow); color: var(--text-dark); }
+.spectator-cta-grid button:nth-child(2) { background-color: #f0f0f0; color: var(--muted); border: 1px solid #ddd; }
+.spectator-cta-grid button:nth-child(3) { background-color: #f0f0f0; color: var(--muted); border: 1px solid #ddd; }
+
+
+/* Mobile adjustments */
+@media (max-width:640px){
+  .app-shell { padding: 0 20px 40px 20px; }
+  .presenter-dashboard { flex-direction: column; }
+  .sidebar { width: 100%; margin-bottom: 20px; }
+  .spectator-interface { margin: 15px 0; }
+  .spectator-header { padding: 15px 20px; }
+  .spectator-header h2 { font-size: 20px; }
+  .spectator-interactions button { width: 45px; height: 45px; font-size: 20px; }
+  .spectator-cta-grid { grid-template-columns: 1fr; }
+  .spectator-input-card { margin: 20px auto; }
 }
 /* --- FIN: CSS EXTENDIDO Y PROFESIONAL PARA PANTALLAS INTERNAS --- */
   </style>
@@ -755,8 +837,8 @@ button.red:hover { background-color: #c9302c; }
           <h2>Mis Presentaciones</h2>
           <div class="content-card fade-in">
             <h3><span class="sidebar-icon">📤</span> Subir Nueva Presentación</h3>
-            <p>Formatos soportados: PDF, PowerPoint (PPT/PPTX)</p>
-            <input type="file" id="presentation-upload" accept=".pdf,.ppt,.pptx" style="margin-bottom: 15px;">
+            <p>Formatos soportados: PDF, PowerPoint (PPT/PPTX), Word (DOCX)</p>
+            <input type="file" id="presentation-upload" accept=".pdf,.ppt,.pptx,.docx" style="margin-bottom: 15px;">
             <button onclick="uploadPresentation()" id="upload-presentation-btn">Subir Presentación</button>
             <div id="upload-presentation-status" style="margin-top: 10px;"></div>
           </div>
@@ -821,7 +903,7 @@ button.red:hover { background-color: #c9302c; }
                 <canvas id="pdf-canvas" style="display:block;margin:0 auto;"></canvas>
                 <div id="current-slide-content" style="padding:20px; text-align:center; display:block;">
                   <h3>Diapositiva 1</h3>
-                  <p>Carga una presentación PDF para previsualizar aquí.</p>
+                  <p>Carga una presentación PDF/PPT para previsualizar aquí.</p>
                 </div>
               </div>
             </div>
@@ -952,33 +1034,37 @@ button.red:hover { background-color: #c9302c; }
 
     <div id="spectator-interface" style="display:none;">
       <div class="spectator-interface">
-        <h2>Presentación en Vivo: <span id="spectator-presentation-title">Introducción a la Ciencia de Datos</span></h2>
+        
+        <div class="spectator-header">
+            <h2>Presentación en Vivo: <span id="spectator-presentation-title">Cargando...</span></h2>
+            <div class="slide-counter">Diapositiva <span id="spectator-slide-number">--</span> de <span id="spectator-total-slides">--</span></div>
+        </div>
+
         <div class="spectator-presentation-area">
-          <div class="slide-container">
-            <div id="spectator-current-slide-content">
+          <div class="slide-content-wrapper">
+            <div id="spectator-current-slide-content" class="spectator-slide-placeholder">
               <h3>Esperando al Presentador</h3>
               <p>La presentación comenzará pronto o ya está en curso...</p>
             </div>
-            <div class="slide-nav">
-              <div class="slide-counter">Diapositiva <span id="spectator-slide-number">--</span> de <span id="spectator-total-slides">--</span></div>
-            </div>
+            <canvas id="spectator-pdf-canvas" class="spectator-slide-pdf-canvas" style="display:none;"></canvas>
+            <div id="spectator-non-pdf-content" class="spectator-slide-placeholder" style="display:none;"></div>
           </div>
         </div>
 
-        <div class="spectator-interactions">
-          <button title="¡Me encanta!" onclick="sendReaction('love')">❤️</button>
-          <button title="¡Aplaudir!" onclick="sendReaction('clap')">👏</button>
-          <button title="Pregunta" onclick="sendReaction('question')">❓</button>
-          <button title="Pulgar Arriba" onclick="sendReaction('thumbsup')">👍</button>
-          <button title="Pulgar Abajo" onclick="sendReaction('thumbsdown')">👎</button>
-        </div>
+        <div class="spectator-interactions-section">
+            <div class="spectator-interactions">
+              <button title="¡Me encanta!" onclick="sendReaction('love')">❤️</button>
+              <button title="¡Aplaudir!" onclick="sendReaction('clap')">👏</button>
+              <button title="Pregunta" onclick="sendReaction('question')">❓</button>
+              <button title="Pulgar Arriba" onclick="sendReaction('thumbsup')">👍</button>
+              <button title="Pulgar Abajo" onclick="sendReaction('thumbsdown')">👎</button>
+            </div>
 
-        <div class="spectator-input-card card" style="margin-top:30px;">
-          <h3>Contenido Interactivo</h3>
-          <p>Participa en encuestas, responde preguntas o sube archivos.</p>
-          <button onclick="answerQuestion()">Responder Pregunta</button>
-          <button style="margin-top:10px;" onclick="uploadFileAsSpectator()">Subir Archivo al Presentador</button>
-          <button style="margin-top:10px;">Descargar Material de Estudio</button>
+            <div class="spectator-cta-grid">
+              <button onclick="answerQuestion()">Responder Pregunta</button>
+              <button onclick="uploadFileAsSpectator()">Subir Archivo al Presentador</button>
+              <button>Descargar Material de Estudio</button>
+            </div>
         </div>
       </div>
     </div>
@@ -1011,6 +1097,9 @@ button.red:hover { background-color: #c9302c; }
     // RT state holds channel, session ID, presence info, and live spectators
     let rt = { chan: null, sessionId: null, presenceKey: null, liveSpectators: {} };
     let isPresenter = false;
+    
+    // **NUEVO** Estado para el PDF del espectador
+    let spectatorPdfDoc = null;
     
     // Almacenamiento local para archivos subidos por el presentador (se mantiene simulación de STORAGE)
     let uploadedFiles = {
@@ -1049,11 +1138,9 @@ button.red:hover { background-color: #c9302c; }
         if (el) el.style.display = 'block';
         if (pageId === 'presenter-dashboard'){
             isPresenter = true;
-            // Cargar listas dinámicas al entrar al dashboard
             loadSavedQuestions();
             loadPresentationsListUI();
             loadMaterialsListUI();
-            // Mostrar la página de resumen por defecto
             showPresenterContent('overview');
             if(currentSessionCode) generateQrCode(currentSessionCode);
         } else {
@@ -1071,7 +1158,6 @@ button.red:hover { background-color: #c9302c; }
       loginForm.style.display = isLogin ? 'none' : 'block';
       registerForm.style.display = isLogin ? 'block' : 'none';
       authTitle.innerText = isLogin ? 'Registro de Presentador' : 'Inicio de Presentador';
-      // limpiar mensajes
       document.getElementById('login-error').textContent = '';
       document.getElementById('register-error').textContent = '';
       document.getElementById('register-success').textContent = '';
@@ -1081,12 +1167,10 @@ button.red:hover { background-color: #c9302c; }
       const mainContentDiv = document.querySelector('#presenter-dashboard .main-content');
       if (!mainContentDiv) return;
       
-      // Ocultar todos los bloques de contenido (que son hijos directos de main-content)
       mainContentDiv.querySelectorAll(':scope > div').forEach(d => {
         d.style.display = 'none';
       });
 
-      // Mostrar el bloque de contenido solicitado
       const target = document.getElementById('presenter-' + contentId + '-content');
       if (target) {
         target.style.display = 'block';
@@ -1095,21 +1179,22 @@ button.red:hover { background-color: #c9302c; }
         return;
       }
 
-      // Ajustar la clase activa de la barra lateral
       document.querySelectorAll('.sidebar ul li a').forEach(a => a.classList.remove('active'));
       const match = document.querySelector(`.sidebar ul li a[onclick*="${contentId}"]`);
       if (match) match.classList.add('active');
 
-      // Lógica específica al cargar la "página"
       if (contentId === 'live-session') {
         document.getElementById('total-slides').textContent = totalSlides;
         document.getElementById('current-slide').textContent = currentSlide;
         document.getElementById('current-presentation-title').textContent = currentPresentation || '--';
-        if (!pdfDoc) {
+        if (fileType === 'pdf' && pdfDoc) {
+             renderPDFPage(currentSlide);
+             document.getElementById('current-slide-content').style.display = 'none';
+             document.getElementById('pdf-canvas').style.display = 'block';
+        } else {
              document.getElementById('current-slide-content').style.display = 'block';
              document.getElementById('pdf-canvas').style.display = 'none';
-        } else {
-            renderPDFPage(currentSlide);
+             updateSlide(); // Asegura que el contenido genérico se muestre para no-PDF
         }
       }
       if (contentId === 'spectator-management') updateSpectatorList(); 
@@ -1120,7 +1205,7 @@ button.red:hover { background-color: #c9302c; }
     }
 
     /************************************************************************
-     * AUTH REAL CON SUPABASE (SIN SIMULACIÓN)
+     * AUTH REAL CON SUPABASE
      ************************************************************************/
     async function authenticateUser(){
       const email = document.getElementById('email').value.trim();
@@ -1170,7 +1255,6 @@ button.red:hover { background-color: #c9302c; }
           errBox.textContent = error.message || 'No se pudo registrar.';
           return;
         }
-        // Si tu proyecto requiere verificación por correo, informamos:
         okBox.textContent = data.user?.confirmed_at
           ? 'Registro exitoso. Ya puedes iniciar sesión.'
           : 'Registro exitoso. Revisa tu correo para confirmar la cuenta y luego inicia sesión.';
@@ -1186,7 +1270,6 @@ button.red:hover { background-color: #c9302c; }
       showPage('landing');
     }
 
-    // Mantener sesión entre recargas
     supa.auth.onAuthStateChange(async (_event, session) => {
       currentUser = session?.user || null;
     });
@@ -1212,7 +1295,6 @@ button.red:hover { background-color: #c9302c; }
         generateQrCode(code);
         document.getElementById('session-id-display').textContent = code;
 
-        // **INICIALIZA REALTIME COMO PRESENTADOR**
         await initRealtimeForSession(currentSessionCode, { asPresenter: true });
         
         alert(`Nueva sesión creada: ${currentSessionCode}. ¡El panel de control en tiempo real está activo!`);
@@ -1223,10 +1305,6 @@ button.red:hover { background-color: #c9302c; }
       }
     }
     
-    /**
-     * Termina la previsualización de la presentación actual en vivo.
-     * Esto no detiene la sesión de RT, solo el contenido del documento.
-     */
     function endSession(){
         if (!currentPresentation) {
             return alert('No hay ninguna presentación activa para finalizar.');
@@ -1235,29 +1313,27 @@ button.red:hover { background-color: #c9302c; }
         const confirmEnd = confirm(`¿Deseas finalizar la presentación de contenido "${currentPresentation}"? Esto te permitirá cargar una nueva presentación.`);
         if (!confirmEnd) return;
 
-        // 1. Limpiar variables de estado de la presentación
+        // Limpiar variables de estado
         currentPresentation = null;
         currentSlide = 1;
         totalSlides = 1;
         pdfDoc = null;
         currentFileUrl = null;
         fileType = null;
+        spectatorPdfDoc = null; // **NUEVO** Limpiar PDF del espectador
 
-        // 2. Actualizar la UI del Presentador
+        // Actualizar UI Presentador
         document.getElementById('current-presentation-title').textContent = '--';
         document.getElementById('current-slide').textContent = '1';
         document.getElementById('total-slides').textContent = '1';
         document.getElementById('current-presentation-text').textContent = 'No hay presentación activa. Inicia una nueva o continúa desde tu biblioteca.';
-        
-        // 3. Limpiar el visor y mostrar el contenido por defecto
         document.getElementById('pdf-canvas').style.display = 'none';
         document.getElementById('current-slide-content').innerHTML = `<h3>Diapositiva 1</h3><p>Carga una presentación PDF para previsualizar aquí.</p>`;
         document.getElementById('current-slide-content').style.display = 'block';
         
-        // 4. Notificar a los espectadores (si hay RT)
+        // Notificar a los espectadores
         if (rt.chan && rt.chan.send) {
              try { 
-                 // **CORRECCIÓN:** Enviar `presentation_end` para que el espectador sepa que debe mostrar la pantalla de espera.
                  rt.chan.send({ type:'broadcast', event:'presentation_end', payload:{ title: '--' } }); 
                  console.log("[RT] Presentación finalizada enviada a espectadores."); 
              } catch(e) { 
@@ -1286,7 +1362,6 @@ button.red:hover { background-color: #c9302c; }
         await initRealtimeForSession(currentSessionCode, { asSpectator: true, name: spectatorName });
         
         document.getElementById('spectator-presentation-title').textContent = "Sesión en Vivo: " + sessionCode;
-        // La info de diapositivas se actualizará en el handler de RT 'slide'
         document.getElementById('spectator-total-slides').textContent = '--';
         document.getElementById('spectator-slide-number').textContent = '--';
         
@@ -1298,11 +1373,6 @@ button.red:hover { background-color: #c9302c; }
       }
     }
 
-    // Funciones para manipular la lista de espectadores en la UI
-    // Se ha simplificado para solo usar las funciones de RT (add/removeSpectatorFromListRT)
-    // y la función central de actualización (updateSpectatorList)
-    
-    // Función central para actualizar la lista de espectadores en la UI
     async function updateSpectatorList(){
         const list = document.getElementById('spectators-list');
         const countDisplay = document.getElementById('active-spectators');
@@ -1316,7 +1386,6 @@ button.red:hover { background-color: #c9302c; }
             return;
         }
 
-        // Se usa Object.values(rt.liveSpectators) que es poblado por el handler de 'presence'
         const spectatorsArray = Object.values(rt.liveSpectators).filter(s => s.type !== 'presenter');
         
         list.innerHTML = '';
@@ -1344,28 +1413,17 @@ button.red:hover { background-color: #c9302c; }
         });
     }
 
-    // Función para "expulsar" un espectador (simulando untrack en RT)
     function kickSpectator(spectatorId) {
         if (!rt.chan || !rt.chan.untrack) return;
         
-        // Simular untrack para remover la presencia. 
-        // En una app real de Supabase, el presentador no puede "desuscribir" a otro, 
-        // pero sí podría enviar un broadcast privado para forzar el desconexión del cliente.
-        // Aquí simulamos que lo quita localmente y actualizamos la lista.
-        
         if (rt.liveSpectators[spectatorId]) {
             alert(`Simulando expulsión de ${rt.liveSpectators[spectatorId].name}.`);
-            // Simulación: removerlo de la lista y forzar actualización
             delete rt.liveSpectators[spectatorId]; 
             updateSpectatorList();
-            
-            // Opcionalmente, enviar un broadcast privado si Supabase lo permitiera:
-            // rt.chan.send({ type:'broadcast', event:'kick', payload:{ targetId: spectatorId } }); 
         }
     }
 
 
-    // Funciones de Asistencia (placeholder)
     async function viewAttendance(){
       const rpt = document.getElementById('attendance-report');
       rpt.style.display = (rpt.style.display === 'none' ? 'block' : 'none');
@@ -1438,6 +1496,14 @@ button.red:hover { background-color: #c9302c; }
         const fileExt = file.name.split('.').pop().toLowerCase();
         const fileUrl = URL.createObjectURL(file); 
 
+        // Extensión: docx, pptx, ppt se manejan igual que PDF para el flujo de carga.
+        const supportedTypes = ['pdf', 'ppt', 'pptx', 'docx'];
+        if (!supportedTypes.includes(fileExt)) {
+             uploadStatus.innerHTML = 'Formato no soportado para presentación en vivo.';
+             uploadBtn.disabled = false;
+             return;
+        }
+
         uploadedFiles.presentations.push({ name: file.name, type: fileExt, url: fileUrl, file });
         
         loadPresentationsListUI();
@@ -1485,22 +1551,23 @@ button.red:hover { background-color: #c9302c; }
       
       document.getElementById('current-presentation-title').textContent = title;
       document.getElementById('current-presentation-text').textContent = `Presentación activa: ${title}`;
-      document.getElementById('spectator-presentation-title').textContent = title;
       currentFileUrl = fileUrl;
       fileType = type;
-      totalSlides = 10; // Valor por defecto
+      totalSlides = 1; 
+      pdfDoc = null;
       
       const uploadStatus = document.getElementById('upload-presentation-status');
-      
       uploadStatus.innerHTML = '<div class="loading-spinner"></div> Cargando presentación para previsualización...';
       
-      if (type === 'pdf' && window.pdfjsLib) {
+      const isPDF = type === 'pdf' && window.pdfjsLib;
+
+      if (isPDF) {
           const fileData = uploadedFiles.presentations.find(p => p.name === title);
           if (fileData && fileData.file) {
              try {
                 pdfDoc = await pdfjsLib.getDocument(fileUrl).promise;
                 totalSlides = pdfDoc.numPages;
-                await renderPDFPage(1);
+                await renderPDFPage(1, 'presenter-pdf-canvas');
                 document.getElementById('pdf-canvas').style.display = 'block';
                 document.getElementById('current-slide-content').style.display = 'none';
              } catch (e) {
@@ -1510,25 +1577,19 @@ button.red:hover { background-color: #c9302c; }
                 document.getElementById('pdf-canvas').style.display = 'none';
                 document.getElementById('current-slide-content').style.display = 'block';
              }
-          } else {
-            totalSlides = 1;
-            document.getElementById('current-slide-content').innerHTML = `<h3>Carga Exitosa (Archivo no encontrado)</h3><p>Simulación de presentación de 1 diapositiva.</p>`;
-            document.getElementById('pdf-canvas').style.display = 'none';
-            document.getElementById('current-slide-content').style.display = 'block';
-          }
+          } 
       } else {
-        totalSlides = 1;
-        document.getElementById('current-slide-content').innerHTML = `<h3>Carga Exitosa (Tipo: ${type.toUpperCase()})</h3><p>La previsualización en vivo solo está disponible para archivos PDF.</p>`;
+        // Simulación para PPT/DOCX/etc.
+        totalSlides = 10; 
+        document.getElementById('current-slide-content').innerHTML = `<h3>Carga Exitosa (Tipo: ${type.toUpperCase()})</h3><p>Vista preliminar simulada. Diapositiva: 1/${totalSlides}.</p>`;
         document.getElementById('pdf-canvas').style.display = 'none';
         document.getElementById('current-slide-content').style.display = 'block';
       }
 
       document.getElementById('total-slides').textContent = totalSlides;
       document.getElementById('current-slide').textContent = currentSlide;
-      document.getElementById('spectator-total-slides').textContent = totalSlides;
-      document.getElementById('spectator-slide-number').textContent = currentSlide;
 
-      // **CORRECCIÓN:** Enviar broadcast de diapositiva inicial después de cargar la presentación.
+      // Sincronizar y notificar a los espectadores
       broadcastSlide();
       
       setTimeout(() => {
@@ -1536,27 +1597,35 @@ button.red:hover { background-color: #c9302c; }
           setTimeout(() => { uploadStatus.innerHTML = ''; showPresenterContent('live-session'); }, 800);
       }, 500);
     }
-    
-    async function renderPDFPage(pageNumber){
-      if (!pdfDoc) return;
-      const page = await pdfDoc.getPage(pageNumber);
-      const canvas = document.getElementById('pdf-canvas');
-      const context = canvas.getContext('2d');
-      const containerWidth = document.getElementById('pdf-viewer-container').clientWidth - 40;
-      const viewport = page.getViewport({ scale: containerWidth / page.getViewport({ scale: 1 }).width });
+
+    /**
+     * Función unificada de renderizado de PDF
+     * @param {number} pageNumber - Número de página/diapositiva a renderizar
+     * @param {string} canvasId - ID del elemento canvas (presenter-pdf-canvas o spectator-pdf-canvas)
+     */
+    async function renderPDFPage(pageNumber, canvasId){
+      const doc = (canvasId === 'pdf-canvas') ? pdfDoc : spectatorPdfDoc;
+      if (!doc) return;
       
+      const page = await doc.getPage(pageNumber);
+      const canvas = document.getElementById(canvasId);
+      const context = canvas.getContext('2d');
+      const containerWidth = canvas.parentElement.clientWidth - 40; 
+
+      let viewport = page.getViewport({ scale: 1 });
+      const scale = containerWidth / viewport.width;
+      viewport = page.getViewport({ scale: scale });
+
       canvas.height = viewport.height;
       canvas.width = viewport.width;
       
       const renderContext = { canvasContext: context, viewport };
       await page.render(renderContext).promise;
       
-      currentSlide = pageNumber;
-      
-      document.getElementById('current-slide').textContent = pageNumber;
-      document.getElementById('spectator-slide-number').textContent = pageNumber;
-      document.getElementById('current-slide-content').style.display = 'none';
-      document.getElementById('pdf-canvas').style.display = 'block';
+      // Mostrar el canvas y ocultar el placeholder
+      canvas.style.display = 'block';
+      const placeholderId = (canvasId === 'pdf-canvas') ? 'current-slide-content' : 'spectator-current-slide-content';
+      document.getElementById(placeholderId).style.display = 'none';
     }
     
     function viewMaterial(name, type, url){
@@ -1570,28 +1639,32 @@ button.red:hover { background-color: #c9302c; }
     function nextSlide(){
       if (currentSlide < totalSlides) {
         currentSlide++;
-        if (pdfDoc) renderPDFPage(currentSlide); else updateSlide();
+        if (fileType === 'pdf' && pdfDoc) renderPDFPage(currentSlide, 'pdf-canvas'); else updateSlide();
         broadcastSlide();
       }
     }
     function prevSlide(){
       if (currentSlide > 1) {
         currentSlide--;
-        if (pdfDoc) renderPDFPage(currentSlide); else updateSlide();
+        if (fileType === 'pdf' && pdfDoc) renderPDFPage(currentSlide, 'pdf-canvas'); else updateSlide();
         broadcastSlide();
       }
     }
     function updateSlide(){
-        // Esto es para presentaciones que no son PDF (solo actualiza el número y texto simulado)
+        // Lógica de visualización para tipos de archivo no-PDF (simulación)
+        const contentHTML = `
+            <h3>Diapositiva ${currentSlide}</h3>
+            <p>Contenido de la diapositiva ${currentSlide} de la presentación (${fileType.toUpperCase()}).</p>
+            <p>Esta es una vista simulada para archivos que no son PDF.</p>
+        `;
         document.getElementById('current-slide').textContent = currentSlide;
-        document.getElementById('spectator-slide-number').textContent = currentSlide;
-        document.getElementById('current-slide-content').innerHTML = `<h3>Diapositiva ${currentSlide}</h3><p>Contenido de la diapositiva ${currentSlide}</p>`;
+        document.getElementById('current-slide-content').innerHTML = contentHTML;
+        document.getElementById('current-slide-content').style.display = 'block';
+        document.getElementById('pdf-canvas').style.display = 'none';
+
+        // Para el espectador, la lógica se maneja dentro de RT/BroadcastSlide
     }
 
-    /**
-     * **FUNCIÓN CLAVE**
-     * Envía la diapositiva actual y el estado de la presentación a los espectadores.
-     */
     function broadcastSlide(){
       if (rt.chan && rt.chan.send) {
         try { 
@@ -1601,7 +1674,9 @@ button.red:hover { background-color: #c9302c; }
                 payload:{ 
                     currentSlide, 
                     totalSlides,
-                    presentationTitle: currentPresentation || "Sesión en Vivo"
+                    presentationTitle: currentPresentation || "Sesión en Vivo",
+                    fileType: fileType, // **NUEVO** Enviar el tipo de archivo
+                    fileUrl: fileType === 'pdf' ? currentFileUrl : null, // **NUEVO** Enviar URL del PDF
                 } 
             }); 
             console.log("[RT] Diapositiva enviada:", currentSlide); 
@@ -1609,13 +1684,18 @@ button.red:hover { background-color: #c9302c; }
             console.warn('Error RT slide', e); 
         }
       } else {
-          alert('Debes iniciar una sesión con el botón "Generar Nuevo Código QR" para sincronizar la diapositiva.');
+          // El presentador no ha iniciado la sesión RT
+          document.getElementById('spectator-presentation-title').textContent = currentPresentation || "Sesión en Vivo";
+          document.getElementById('spectator-slide-number').textContent = currentSlide;
+          document.getElementById('spectator-total-slides').textContent = totalSlides;
+          console.warn('No hay conexión Realtime. Solo se actualiza la vista local.');
       }
     }
     
     /************************************************************************
      * PREGUNTAS
      ************************************************************************/
+    // (Funciones de preguntas se mantienen sin cambios)
     function setQuestionType(type, event){
       questionType = type;
       document.querySelectorAll('.question-type-selector button').forEach(b => b.classList.remove('active'));
@@ -1667,7 +1747,6 @@ button.red:hover { background-color: #c9302c; }
           });
           if (options.length < 2) return alert('Para este tipo de pregunta, se requieren al menos dos opciones.');
       }
-      // Guarda en memoria local (tu pedido no requiere BD para preguntas)
       const newQuestion = { id: savedQuestions.length + 10, title, qtype: questionType, options };
       savedQuestions.push(newQuestion);
       alert('Pregunta guardada correctamente.');
@@ -1736,20 +1815,18 @@ button.red:hover { background-color: #c9302c; }
       try {
         const topic = `realtime:${sessionCode}`;
         
-        // **CORRECCIÓN:** Asegurar que 'presence' esté correctamente configurado en el canal.
         const name = opts.name || (currentUser?.user_metadata?.name || (opts.asPresenter ? 'Presentador RT' : 'Espectador RT'));
         const chan = supa.channel(topic, { 
             config: { 
                 broadcast: { ack: false }, 
                 presence: { 
-                    key: name, // Usar el nombre como la clave de presencia para fácil identificación
+                    key: name, 
                 } 
             }
         });
         
         rt.chan = chan;
 
-        // Broadcast: Reacciones -> solo el presentador actualiza contadores
         chan.on('broadcast', { event: 'reaction' }, (payload) => {
           if (opts.asPresenter) {
             const k = payload.payload.kind;
@@ -1758,24 +1835,58 @@ button.red:hover { background-color: #c9302c; }
           }
         });
         
-        // Broadcast: Diapositivas/Contenido -> el espectador sincroniza su vista
-        chan.on('broadcast', { event: 'slide' }, (payload) => {
+        // **NUEVA LÓGICA DE SINCRONIZACIÓN DE DIAPOSITIVAS PARA ESPECTADOR**
+        chan.on('broadcast', { event: 'slide' }, async (payload) => {
           if (opts.asSpectator) {
-            const { currentSlide: slide, totalSlides: total, presentationTitle: title } = payload.payload;
+            const { currentSlide: slide, totalSlides: total, presentationTitle: title, fileType: type, fileUrl: url } = payload.payload;
+            
+            // 1. Actualizar títulos
             document.getElementById('spectator-presentation-title').textContent = title;
             document.getElementById('spectator-slide-number').textContent = slide;
             document.getElementById('spectator-total-slides').textContent = total;
-            document.getElementById('spectator-current-slide-content').innerHTML = `
-                <h3>Diapositiva ${slide}</h3>
-                <p>El presentador está viendo la diapositiva ${slide} de ${total}.</p>
-            `;
-            console.log(`[RT-Spectator] Diapositiva sincronizada: ${slide}/${total}`);
+            
+            const placeholder = document.getElementById('spectator-current-slide-content');
+            const canvas = document.getElementById('spectator-pdf-canvas');
+            const nonPdfContent = document.getElementById('spectator-non-pdf-content');
+
+            canvas.style.display = 'none';
+            placeholder.style.display = 'none';
+            nonPdfContent.style.display = 'none';
+
+            if (type === 'pdf' && url && window.pdfjsLib) {
+                 // 2. Cargar/renderizar PDF
+                 if (!spectatorPdfDoc || spectatorPdfDoc.loadingParams.url !== url) {
+                    try {
+                        spectatorPdfDoc = await pdfjsLib.getDocument(url).promise;
+                    } catch(e) {
+                        console.error("Error al cargar PDF para espectador:", e);
+                        placeholder.innerHTML = `<h3>Error de Carga PDF</h3><p>No se pudo cargar el archivo PDF.</p>`;
+                        placeholder.style.display = 'block';
+                        return;
+                    }
+                 }
+                 await renderPDFPage(slide, 'spectator-pdf-canvas');
+
+            } else {
+                 // 3. Simulación para PPT/DOCX/otros
+                 const fileIcon = (type.includes('ppt')) ? '📄' : ((type.includes('doc')) ? '📝' : '📎');
+                 nonPdfContent.innerHTML = `
+                      <h3>${fileIcon} Diapositiva ${slide}</h3>
+                      <p>Visualización simulada de archivo ${type.toUpperCase()}.</p>
+                      <small>El presentador está en la diapositiva ${slide} de ${total}.</small>
+                 `;
+                 nonPdfContent.style.display = 'block';
+                 
+                 // Limpiar canvas por si acaso
+                 const ctx = canvas.getContext('2d');
+                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
           }
         });
 
-        // Broadcast: Fin de la presentación
         chan.on('broadcast', { event: 'presentation_end' }, (payload) => {
              if (opts.asSpectator) {
+                 spectatorPdfDoc = null; // Limpiar PDF
                  document.getElementById('spectator-presentation-title').textContent = "Presentación Finalizada";
                  document.getElementById('spectator-slide-number').textContent = '--';
                  document.getElementById('spectator-total-slides').textContent = '--';
@@ -1783,21 +1894,22 @@ button.red:hover { background-color: #c9302c; }
                     <h3>Sesión de Contenido Finalizada</h3>
                     <p>Esperando a que el presentador inicie la siguiente actividad.</p>
                  `;
+                 document.getElementById('spectator-current-slide-content').style.display = 'block';
+                 document.getElementById('spectator-pdf-canvas').style.display = 'none';
+                 document.getElementById('spectator-non-pdf-content').style.display = 'none';
              }
         });
         
-        // Presencia: Sincronización Inicial (Sync)
+        // Presencia handlers (sync, join, leave) se mantienen iguales
         chan.on('presence', { event: 'sync' }, () => {
              const state = chan.presenceState();
              rt.liveSpectators = {};
-             // Procesar el estado de presencia para tener una lista simple
              Object.entries(state).forEach(([key, presences]) => {
-                // Solo nos interesan las presencias de Espectadores y Presentadores
                 presences.forEach(p => {
                     rt.liveSpectators[key] = { 
-                        name: p.name, // El key se configuró como el nombre en la subscripción
+                        name: p.name, 
                         id: key, 
-                        type: p.type || 'spectator' // Agregar el tipo para el filtro
+                        type: p.type || 'spectator' 
                     };
                 });
              });
@@ -1805,17 +1917,14 @@ button.red:hover { background-color: #c9302c; }
              console.log("[RT] Sincronización de Presencia completa.", rt.liveSpectators);
         });
         
-        // Presencia: Nuevo se une (Join)
         chan.on('presence', { event: 'join' }, ({ newPresences }) => {
             newPresences.forEach(p => {
-                 // El payload 'p' aquí es { name: '...', type: '...' }
-                 const key = p.name; // Usamos el nombre como clave (establecido en la subscripción)
+                 const key = p.name; 
                  rt.liveSpectators[key] = { name: p.name, id: key, type: p.type || 'spectator' };
             });
             if (opts.asPresenter) updateSpectatorList();
         });
         
-        // Presencia: Uno se va (Leave)
         chan.on('presence', { event: 'leave' }, ({ leftPresences }) => {
             leftPresences.forEach(p => {
                  const key = p.name;
@@ -1824,18 +1933,16 @@ button.red:hover { background-color: #c9302c; }
             if (opts.asPresenter) updateSpectatorList();
         });
 
-        // Suscribirse
         await chan.subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
                 rt.presenceKey = name;
                 const userType = opts.asPresenter ? 'presenter' : 'spectator';
                 
-                // Track con info adicional (el "name" ya es el key en la config del canal)
                 await chan.track({ name: name, type: userType }); 
                 console.log(`[RT] Conexión establecida. Usuario: ${name} (${userType})`);
                 
-                // Si es espectador, pedir el estado actual de la diapositiva al presentador
                 if (opts.asSpectator) {
+                    // Pedir el estado actual
                     chan.send({ 
                         type:'broadcast', 
                         event:'request_slide_sync', 
@@ -1847,10 +1954,8 @@ button.red:hover { background-color: #c9302c; }
             }
         });
 
-        // **CORRECCIÓN:** Manejar solicitud de sincronización de diapositivas
         chan.on('broadcast', { event: 'request_slide_sync' }, (payload) => {
             if (opts.asPresenter && currentPresentation) {
-                 // El presentador reenvía su estado actual a todos (incluyendo al nuevo)
                  broadcastSlide(); 
                  console.log(`[RT-Presenter] Solicitud de sincronización recibida de ${payload.payload.requestingSpectator}. Enviando estado de diapositiva actual.`);
             }
@@ -1858,13 +1963,11 @@ button.red:hover { background-color: #c9302c; }
         
       } catch(err){
         console.warn('initRealtimeForSession err', err);
-        // Fallback local cuando RT falla
         rt.chan = { 
             send: (msg) => { console.warn("RT: Mensaje local (RT no conectado).", msg); } ,
             untrack: () => Promise.resolve(),
             unsubscribe: () => Promise.resolve(),
         };
-        // Simulación para que la interfaz no quede vacía
         if (opts.asPresenter) {
             rt.liveSpectators['demo-1'] = { name: 'Espectador Demo 1', id:'demo-1', type:'spectator' };
             rt.liveSpectators['demo-2'] = { name: 'Espectador Demo 2', id:'demo-2', type:'spectator' };
@@ -1880,6 +1983,7 @@ button.red:hover { background-color: #c9302c; }
              try { await rt.chan.unsubscribe(); } catch(e){}
         }
         rt = { chan:null, sessionId:null, presenceKey:null, liveSpectators: {} };
+        spectatorPdfDoc = null; // Limpiar PDF del espectador
         const connectedSpectatorsEl = document.getElementById('connected-spectators');
         if (connectedSpectatorsEl) connectedSpectatorsEl.textContent = '0 espectadores activos';
         updateSpectatorList();
@@ -1896,8 +2000,6 @@ button.red:hover { background-color: #c9302c; }
         if (rt.chan && rt.chan.send) {
              try { 
                  rt.chan.send({ type:'broadcast', event:'reaction', payload:{ kind } }); 
-                 // **NOTA:** La reacción no se verá instantáneamente si es la misma persona que la envía, 
-                 // ya que Supabase no envía los broadcasts al emisor por defecto.
                  console.log("[RT] Reacción enviada:", kind); 
              } catch(e) { 
                  console.warn('Error RT sendReaction', e); 
@@ -1940,14 +2042,11 @@ button.red:hover { background-color: #c9302c; }
         const sessionId = urlParams.get('session');
         if (sessionId) {
           document.getElementById('session-id-input').value = sessionId;
-          // **CORRECCIÓN:** Si hay una ID de sesión, ir a la pantalla de unión.
           showPage('spectator-join');
         } else {
-          // **CORRECCIÓN:** Si no hay ID de sesión, ir al dashboard si está logueado o a landing.
           showPage(currentUser ? 'presenter-dashboard' : 'landing');
         }
       } catch(e){ 
-        // Si falla la obtención de sesión, simplemente vamos a la página de inicio.
         showPage('landing'); 
       }
     })();
