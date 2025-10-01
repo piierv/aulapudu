@@ -1075,10 +1075,12 @@ button.red:hover { background-color: #c9302c; }
      * CONFIG
      ************************************************************************/
     // **IMPORTANTE:** Reemplaza estos valores con la configuración real de tu proyecto Supabase.
-    // Asumo la existencia de una tabla 'sessions' con columnas: session_id (TEXT, PK), presentor_uid (UUID)
     const SUPABASE_URL = "https://gxgbtnmqdghixfaamsad.supabase.co"; 
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z2J0bm1xZGdoaXhmYWFtc2FkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNzAzMjgsImV4cCI6MjA3NDg0NjMyOH0.0dMTZONs7EDqWPFOV9M3gCUJKjdMBt9xdlLuQk13Jao"; 
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // **NUEVO:** Constante para el bucket de Supabase Storage
+    const STORAGE_BUCKET = 'presentations';
 
     /************************************************************************
      * ESTADO LOCAL
@@ -1292,7 +1294,7 @@ button.red:hover { background-color: #c9302c; }
         generateQrCode(code);
         document.getElementById('session-id-display').textContent = code;
 
-        // **NUEVO: Insertar la sesión en Supabase**
+        // **Insertar la sesión en Supabase**
         const { error: insertError } = await supa
             .from('sessions') 
             .insert([{ session_id: code, presentor_uid: userId }]);
@@ -1300,7 +1302,7 @@ button.red:hover { background-color: #c9302c; }
         if (insertError) {
              console.error('Error insertando sesión:', insertError);
              alert('Error creando sesión en DB: ' + insertError.message);
-             currentSessionCode = null; // Fallback
+             currentSessionCode = null; 
              return;
         }
 
@@ -1378,7 +1380,7 @@ button.red:hover { background-color: #c9302c; }
                 .from('sessions')
                 .delete()
                 .eq('session_id', currentSessionCode)
-                .eq('presentor_uid', currentUser.id); // Seguridad RLS: solo borra si es el dueño.
+                .eq('presentor_uid', currentUser.id); 
 
             if (deleteError) {
                 alert('Error al borrar la sesión de la base de datos. Verifica RLS y propiedad: ' + deleteError.message);
@@ -1388,7 +1390,7 @@ button.red:hover { background-color: #c9302c; }
             // 3. Limpiar estado local y desconectar RT
             await cleanupRealtime();
             currentSessionCode = null;
-            showPage('presenter-dashboard'); // Volver al dashboard
+            showPage('presenter-dashboard'); 
             document.getElementById('session-id-display').textContent = '--';
             document.getElementById('qr-code-img').style.display = 'none';
 
@@ -1411,7 +1413,7 @@ button.red:hover { background-color: #c9302c; }
       
       if (sessionCode.substring(0, 9) !== 'AULAPUDU-') return alert('ID de Sesión no válido.');
 
-      // **NUEVO: Verificar existencia de sesión**
+      // **Verificar existencia de sesión**
       try {
         const { data, error } = await supa
             .from('sessions')
@@ -1518,7 +1520,7 @@ button.red:hover { background-color: #c9302c; }
     }
     
     /************************************************************************
-     * PRESENTACIONES / MATERIALES (PDF.JS + SIMULACIÓN DE STORAGE LOCAL)
+     * PRESENTACIONES / MATERIALES (PDF.JS + SUPABASE STORAGE)
      ************************************************************************/
     
     function loadPresentationsListUI() {
@@ -1531,10 +1533,14 @@ button.red:hover { background-color: #c9302c; }
       uploadedFiles.presentations.forEach(p => {
         const li = document.createElement('li');
         li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.padding = '12px 0'; li.style.borderBottom = '1px solid #eee';
+        
+        // Determinar qué URL usar para el botón Cargar
+        const urlToUse = p.supabaseUrl || p.url;
+
         li.innerHTML = `
-          <span>${p.name} (${p.type.toUpperCase()})</span>
+          <span>${p.name} (${p.type.toUpperCase()}) ${p.supabaseUrl ? '✅' : '❌'}</span>
           <div>
-            <button onclick="loadPresentation('${p.name.replace(/'/g,"\\'")}', '${p.type}', '${p.url}')">Cargar</button>
+            <button onclick="loadPresentation('${p.name.replace(/'/g,"\\'")}', '${p.type}', '${urlToUse.replace(/'/g,"\\'")}')">Cargar</button>
             <button class="red" onclick="deleteFile(event, '${p.name.replace(/'/g,"\\'")}', 'presentations')">Eliminar</button>
           </div>
         `;
@@ -1560,6 +1566,19 @@ button.red:hover { background-color: #c9302c; }
     function deleteFile(event, name, type) {
         event.preventDefault();
         if (!confirm(`¿Estás seguro de que deseas eliminar el archivo "${name}"?`)) return;
+        
+        // Intentar borrar de Storage si existe la URL pública (Subida Real)
+        const fileRecord = uploadedFiles[type].find(f => f.name === name);
+        if (fileRecord && fileRecord.supabaseUrl) {
+            const fileName = fileRecord.supabaseUrl.split('/').pop();
+            supa.storage.from(STORAGE_BUCKET).remove([`${currentUser.id}/${fileName}`]).then(() => {
+                console.log(`[Storage] Archivo ${fileName} eliminado de Supabase.`);
+            }).catch(e => {
+                console.error("[Storage] Error al borrar el archivo:", e);
+            });
+        }
+
+        // Borrar de la lista local
         uploadedFiles[type] = uploadedFiles[type].filter(f => f.name !== name);
         if (type === 'presentations') loadPresentationsListUI();
         else if (type === 'materials') loadMaterialsListUI();
@@ -1570,37 +1589,66 @@ button.red:hover { background-color: #c9302c; }
       const input = document.getElementById('presentation-upload');
       const file = input.files[0];
       if (!file) return alert('Selecciona un archivo.');
-      
+      if (!currentUser) return alert('Debes iniciar sesión para subir archivos a Supabase Storage.');
+
       const uploadBtn = document.getElementById('upload-presentation-btn');
       const uploadStatus = document.getElementById('upload-presentation-status');
       uploadBtn.disabled = true;
-      uploadStatus.innerHTML = '<div class="loading-spinner"></div> Subiendo presentación...';
+      uploadStatus.innerHTML = '<div class="loading-spinner"></div> Subiendo presentación a Supabase...';
+      
+      const fileExt = file.name.split('.').pop().toLowerCase();
+      const supportedTypes = ['pdf', 'ppt', 'pptx', 'docx'];
+      if (!supportedTypes.includes(fileExt)) {
+           uploadStatus.innerHTML = 'Formato no soportado para presentación en vivo.';
+           uploadBtn.disabled = false;
+           return;
+      }
+
+      const filePath = `${currentUser.id}/${file.name}-${Date.now()}.${fileExt}`; // Carpeta de usuario/nombre único
+
       try {
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        const fileUrl = URL.createObjectURL(file); 
+        // 1. Subir a Supabase Storage
+        const { data: uploadData, error: uploadError } = await supa.storage
+          .from(STORAGE_BUCKET)
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-        const supportedTypes = ['pdf', 'ppt', 'pptx', 'docx'];
-        if (!supportedTypes.includes(fileExt)) {
-             uploadStatus.innerHTML = 'Formato no soportado para presentación en vivo.';
-             uploadBtn.disabled = false;
-             return;
-        }
+        if (uploadError) throw uploadError;
 
-        uploadedFiles.presentations.push({ name: file.name, type: fileExt, url: fileUrl, file: file });
+        // 2. Obtener URL pública
+        const { data: urlData } = supa.storage
+          .from(STORAGE_BUCKET)
+          .getPublicUrl(filePath);
+        
+        const publicUrl = urlData.publicUrl;
+
+        // 3. Almacenar localmente
+        const fileUrlLocal = URL.createObjectURL(file); // URL local para el presentador
+        uploadedFiles.presentations.push({ 
+            name: file.name, 
+            type: fileExt, 
+            url: fileUrlLocal, // URL local (solo para la precarga del presentador)
+            file: file, 
+            supabaseUrl: publicUrl // URL pública (para el espectador)
+        });
         
         loadPresentationsListUI();
         
         input.value = '';
-        uploadStatus.innerHTML = 'Presentación subida correctamente';
+        uploadStatus.innerHTML = '✅ Presentación subida y disponible para espectadores.';
         setTimeout(()=>{ uploadStatus.innerHTML=''; uploadBtn.disabled=false; }, 1200);
+
       } catch (err) {
-        uploadStatus.innerHTML = 'Error al subir la presentación';
+        uploadStatus.innerHTML = `❌ Error al subir: ${err.message}`;
         uploadBtn.disabled = false;
         console.error('uploadPresentation', err);
       }
     }
 
     async function uploadMaterial(){
+      // (Función de carga de materiales sin cambios, asumiendo subida similar o solo manejo local)
       const input = document.getElementById('material-upload');
       const file = input.files[0];
       if (!file) return alert('Selecciona un archivo.');
@@ -1647,22 +1695,19 @@ button.red:hover { background-color: #c9302c; }
       const canvas = document.getElementById('pdf-canvas');
 
       if (isPDF) {
-          const fileData = uploadedFiles.presentations.find(p => p.name === title);
-          if (fileData && fileData.file) {
-             try {
-                currentFile = fileData.file;
-                pdfDoc = await pdfjsLib.getDocument({ data: await currentFile.arrayBuffer() }).promise;
-                totalSlides = pdfDoc.numPages;
-                await renderPDFPage(1, 'pdf-canvas'); 
-                
-             } catch (e) {
-                console.error("Error al renderizar PDF:", e);
-                totalSlides = 1;
-                placeholder.innerHTML = `<h3>Error de Carga PDF</h3><p>No se pudo renderizar el PDF. ${e.message}</p>`;
-                canvas.style.display = 'none';
-                placeholder.style.display = 'block';
-             }
-          } 
+          try {
+            // **CORRECCIÓN:** Usar la URL pública para cargar el PDF (simulando descarga)
+            pdfDoc = await pdfjsLib.getDocument(currentFileUrl).promise;
+            totalSlides = pdfDoc.numPages;
+            await renderPDFPage(1, 'pdf-canvas'); 
+            
+          } catch (e) {
+            console.error("Error al renderizar PDF:", e);
+            totalSlides = 1;
+            placeholder.innerHTML = `<h3>Error de Carga PDF</h3><p>No se pudo renderizar el PDF. ${e.message}</p>`;
+            canvas.style.display = 'none';
+            placeholder.style.display = 'block';
+          }
       } else {
         // Simulación para PPT/DOCX/etc.
         totalSlides = 10; 
@@ -1765,8 +1810,7 @@ button.red:hover { background-color: #c9302c; }
                     totalSlides,
                     presentationTitle: currentPresentation || "Sesión en Vivo",
                     fileType: fileType, 
-                    // Enviar URL local; el espectador recibirá error pero sabrá los metadatos.
-                    fileUrl: currentFileUrl, 
+                    fileUrl: currentFileUrl, // URL PÚBLICA DE SUPABASE STORAGE
                 } 
             }); 
             console.log("[RT] Diapositiva enviada:", currentSlide); 
@@ -1942,13 +1986,21 @@ button.red:hover { background-color: #c9302c; }
             nonPdfContent.style.display = 'none';
 
             if (type === 'pdf' && url && window.pdfjsLib) {
-                 // **MENSAJE CRÍTICO:** Informar al espectador sobre la limitación (ya que no puede acceder a la URL local del presentador)
-                 nonPdfContent.innerHTML = `
-                      <h3>⚠️ Error de Carga para Espectador</h3>
-                      <p>No se pudo cargar el archivo PDF (${title}). La previsualización de archivos locales solo está disponible para el presentador. El presentador está viendo la diapositiva ${slide} de ${total}.</p>
-                      <small>Siga el avance del presentador usando los números de diapositiva.</small>
-                 `;
-                 nonPdfContent.style.display = 'block';
+                 // **SOLUCIÓN PDF (Usando URL Pública)**
+                 try {
+                    if (!spectatorPdfDoc || spectatorPdfDoc.loadingParams.url !== url) {
+                        spectatorPdfDoc = await pdfjsLib.getDocument(url).promise;
+                    }
+                    await renderPDFPage(slide, 'spectator-pdf-canvas');
+                 } catch(e) {
+                    console.error("Error al cargar PDF para espectador (URL pública):", e);
+                    nonPdfContent.innerHTML = `
+                         <h3>⚠️ Error de Carga PDF</h3>
+                         <p>No se pudo cargar el archivo PDF desde Supabase. Verifique los permisos del bucket ${STORAGE_BUCKET}.</p>
+                         <small>El presentador está viendo la diapositiva ${slide} de ${total}.</small>
+                    `;
+                    nonPdfContent.style.display = 'block';
+                 }
 
             } else if (type !== 'pdf') {
                  // 3. Simulación para PPT/DOCX/otros
@@ -1988,7 +2040,7 @@ button.red:hover { background-color: #c9302c; }
              }
         });
         
-        // **NUEVO: Manejar borrado de sesión globalmente**
+        // **Manejar borrado de sesión globalmente**
         chan.on('broadcast', { event: 'session_delete' }, (payload) => {
              if (opts.asSpectator) {
                  alert('La sesión ha sido finalizada por el presentador.');
