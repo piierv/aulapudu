@@ -1074,12 +1074,12 @@ button.red:hover { background-color: #c9302c; }
     /************************************************************************
      * CONFIG
      ************************************************************************/
-    // **IMPORTANTE:** Reemplaza estos valores con la configuración real de tu proyecto Supabase.
+    // **REEMPLAZA ESTOS VALORES CON TU CONFIGURACIÓN REAL DE SUPABASE**
     const SUPABASE_URL = "https://gxgbtnmqdghixfaamsad.supabase.co"; 
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z2J0bm1xZGdoaXhmYWFtc2FkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyNzAzMjgsImV4cCI6MjA3NDg0NjMyOH0.0dMTZONs7EDqWPFOV9M3gCUJKjdMBt9xdlLuQk13Jao"; 
     const supa = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    // **NUEVO:** Constante para el bucket de Supabase Storage
+    // **CRÍTICO:** Nombre de tu bucket de Storage (debe ser público)
     const STORAGE_BUCKET = 'presentations';
 
     /************************************************************************
@@ -1094,7 +1094,7 @@ button.red:hover { background-color: #c9302c; }
     let reactionCounts = { love:0, clap:0, question:0, thumbsup:0, thumbsdown:0 };
     let timerInterval = null, timerSeconds = 0;
     let pdfDoc = null; 
-    let currentFileUrl = null;
+    let currentFileUrl = null; // Almacena la URL PÚBLICA de Supabase
     let currentFile = null; 
     let fileType = null;
     let rt = { chan: null, sessionId: null, presenceKey: null, liveSpectators: {} };
@@ -1284,8 +1284,13 @@ button.red:hover { background-color: #c9302c; }
     }
 
     async function generateNewSession(){
-      const userId = currentUser ? currentUser.id : null;
-      if (!userId) return alert('Primero inicia sesión como presentador.');
+      
+      const { data: { user }, error: userError } = await supa.auth.getUser();
+      const userId = user?.id;
+
+      if (userError || !userId) {
+          return alert('Error de autenticación: No se pudo verificar tu identidad. Por favor, inicia sesión nuevamente.');
+      }
       
       const code = 'AULAPUDU-' + Math.floor(10000 + Math.random()*90000);
       currentSessionCode = code;
@@ -1301,11 +1306,10 @@ button.red:hover { background-color: #c9302c; }
         
         if (insertError) {
              console.error('Error insertando sesión:', insertError);
-             alert('Error creando sesión en DB: ' + insertError.message);
+             alert('Error insertando datos en DB. Revisa que tu columna se llame "presentor_uid" y sea una clave foránea a auth.users(id): ' + insertError.message);
              currentSessionCode = null; 
              return;
         }
-
 
         await initRealtimeForSession(currentSessionCode, { asPresenter: true });
         
@@ -1413,7 +1417,7 @@ button.red:hover { background-color: #c9302c; }
       
       if (sessionCode.substring(0, 9) !== 'AULAPUDU-') return alert('ID de Sesión no válido.');
 
-      // **Verificar existencia de sesión**
+      // **Verificar existencia de sesión en DB**
       try {
         const { data, error } = await supa
             .from('sessions')
@@ -1534,7 +1538,6 @@ button.red:hover { background-color: #c9302c; }
         const li = document.createElement('li');
         li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.padding = '12px 0'; li.style.borderBottom = '1px solid #eee';
         
-        // Determinar qué URL usar para el botón Cargar
         const urlToUse = p.supabaseUrl || p.url;
 
         li.innerHTML = `
@@ -1567,12 +1570,14 @@ button.red:hover { background-color: #c9302c; }
         event.preventDefault();
         if (!confirm(`¿Estás seguro de que deseas eliminar el archivo "${name}"?`)) return;
         
-        // Intentar borrar de Storage si existe la URL pública (Subida Real)
         const fileRecord = uploadedFiles[type].find(f => f.name === name);
         if (fileRecord && fileRecord.supabaseUrl) {
-            const fileName = fileRecord.supabaseUrl.split('/').pop();
-            supa.storage.from(STORAGE_BUCKET).remove([`${currentUser.id}/${fileName}`]).then(() => {
-                console.log(`[Storage] Archivo ${fileName} eliminado de Supabase.`);
+            // Generar la ruta exacta del archivo en Supabase Storage
+            const pathSegments = fileRecord.supabaseUrl.split('/').slice(-2);
+            const filePath = pathSegments.join('/'); 
+
+            supa.storage.from(STORAGE_BUCKET).remove([filePath]).then(() => {
+                console.log(`[Storage] Archivo ${filePath} eliminado de Supabase.`);
             }).catch(e => {
                 console.error("[Storage] Error al borrar el archivo:", e);
             });
@@ -1589,7 +1594,9 @@ button.red:hover { background-color: #c9302c; }
       const input = document.getElementById('presentation-upload');
       const file = input.files[0];
       if (!file) return alert('Selecciona un archivo.');
-      if (!currentUser) return alert('Debes iniciar sesión para subir archivos a Supabase Storage.');
+      
+      const { data: { user } } = await supa.auth.getUser();
+      if (!user) return alert('Debes iniciar sesión para subir archivos a Supabase Storage.');
 
       const uploadBtn = document.getElementById('upload-presentation-btn');
       const uploadStatus = document.getElementById('upload-presentation-status');
@@ -1604,11 +1611,12 @@ button.red:hover { background-color: #c9302c; }
            return;
       }
 
-      const filePath = `${currentUser.id}/${file.name}-${Date.now()}.${fileExt}`; // Carpeta de usuario/nombre único
+      // Carpeta de usuario/NombreArchivo-Timestamp.ext
+      const filePath = `${user.id}/${file.name}-${Date.now()}.${fileExt}`; 
 
       try {
         // 1. Subir a Supabase Storage
-        const { data: uploadData, error: uploadError } = await supa.storage
+        const { error: uploadError } = await supa.storage
           .from(STORAGE_BUCKET)
           .upload(filePath, file, {
             cacheControl: '3600',
@@ -1624,14 +1632,14 @@ button.red:hover { background-color: #c9302c; }
         
         const publicUrl = urlData.publicUrl;
 
-        // 3. Almacenar localmente
-        const fileUrlLocal = URL.createObjectURL(file); // URL local para el presentador
+        // 3. Almacenar localmente el registro con la URL PÚBLICA
+        const fileUrlLocal = URL.createObjectURL(file); 
         uploadedFiles.presentations.push({ 
             name: file.name, 
             type: fileExt, 
-            url: fileUrlLocal, // URL local (solo para la precarga del presentador)
+            url: fileUrlLocal, 
             file: file, 
-            supabaseUrl: publicUrl // URL pública (para el espectador)
+            supabaseUrl: publicUrl 
         });
         
         loadPresentationsListUI();
@@ -1641,14 +1649,13 @@ button.red:hover { background-color: #c9302c; }
         setTimeout(()=>{ uploadStatus.innerHTML=''; uploadBtn.disabled=false; }, 1200);
 
       } catch (err) {
-        uploadStatus.innerHTML = `❌ Error al subir: ${err.message}`;
+        uploadStatus.innerHTML = `❌ Error al subir a Storage. Verifica que el bucket '${STORAGE_BUCKET}' sea público: ${err.message}`;
         uploadBtn.disabled = false;
         console.error('uploadPresentation', err);
       }
     }
 
     async function uploadMaterial(){
-      // (Función de carga de materiales sin cambios, asumiendo subida similar o solo manejo local)
       const input = document.getElementById('material-upload');
       const file = input.files[0];
       if (!file) return alert('Selecciona un archivo.');
@@ -1681,7 +1688,7 @@ button.red:hover { background-color: #c9302c; }
       
       document.getElementById('current-presentation-title').textContent = title;
       document.getElementById('current-presentation-text').textContent = `Presentación activa: ${title}`;
-      currentFileUrl = fileUrl;
+      currentFileUrl = fileUrl; // URL PÚBLICA DE SUPABASE STORAGE
       fileType = type;
       totalSlides = 1; 
       pdfDoc = null;
@@ -1696,7 +1703,7 @@ button.red:hover { background-color: #c9302c; }
 
       if (isPDF) {
           try {
-            // **CORRECCIÓN:** Usar la URL pública para cargar el PDF (simulando descarga)
+            // El presentador carga el PDF usando la URL pública
             pdfDoc = await pdfjsLib.getDocument(currentFileUrl).promise;
             totalSlides = pdfDoc.numPages;
             await renderPDFPage(1, 'pdf-canvas'); 
@@ -1719,7 +1726,6 @@ button.red:hover { background-color: #c9302c; }
       document.getElementById('total-slides').textContent = totalSlides;
       document.getElementById('current-slide').textContent = currentSlide;
 
-      // Sincronizar y notificar a los espectadores
       broadcastSlide();
       
       setTimeout(() => {
@@ -1810,7 +1816,7 @@ button.red:hover { background-color: #c9302c; }
                     totalSlides,
                     presentationTitle: currentPresentation || "Sesión en Vivo",
                     fileType: fileType, 
-                    fileUrl: currentFileUrl, // URL PÚBLICA DE SUPABASE STORAGE
+                    fileUrl: currentFileUrl, // Enviar URL PÚBLICA
                 } 
             }); 
             console.log("[RT] Diapositiva enviada:", currentSlide); 
@@ -1986,7 +1992,7 @@ button.red:hover { background-color: #c9302c; }
             nonPdfContent.style.display = 'none';
 
             if (type === 'pdf' && url && window.pdfjsLib) {
-                 // **SOLUCIÓN PDF (Usando URL Pública)**
+                 // **CARGA DEL PDF USANDO URL PÚBLICA**
                  try {
                     if (!spectatorPdfDoc || spectatorPdfDoc.loadingParams.url !== url) {
                         spectatorPdfDoc = await pdfjsLib.getDocument(url).promise;
@@ -1996,8 +2002,8 @@ button.red:hover { background-color: #c9302c; }
                     console.error("Error al cargar PDF para espectador (URL pública):", e);
                     nonPdfContent.innerHTML = `
                          <h3>⚠️ Error de Carga PDF</h3>
-                         <p>No se pudo cargar el archivo PDF desde Supabase. Verifique los permisos del bucket ${STORAGE_BUCKET}.</p>
-                         <small>El presentador está viendo la diapositiva ${slide} de ${total}.</small>
+                         <p>No se pudo cargar el archivo PDF (${title}). Verifique la configuración de Storage. El presentador está en la diapositiva ${slide}.</p>
+                         <small>Siga el avance del presentador usando los números de diapositiva.</small>
                     `;
                     nonPdfContent.style.display = 'block';
                  }
