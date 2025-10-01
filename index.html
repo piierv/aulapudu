@@ -589,7 +589,7 @@ button.red:hover { background-color: #c9302c; }
 .spectator-interface {
   max-width: 900px;
   margin: 30px auto;
-  padding: 0; /* Eliminado el padding del contenedor principal */
+  padding: 0; 
   background-color: white;
   border-radius: var(--radius);
   box-shadow: 0 6px 15px rgba(18,60,50,0.08);
@@ -609,7 +609,7 @@ button.red:hover { background-color: #c9302c; }
 }
 .slide-counter {
   font-weight: 600;
-  color: var(--bg-top); /* Texto más claro sobre fondo verde */
+  color: var(--bg-top); 
   margin-top: 5px;
   font-size: 16px;
 }
@@ -896,11 +896,11 @@ button.red:hover { background-color: #c9302c; }
               <div style="display:flex;gap:10px;margin-top:10px;">
                 <button onclick="prevSlide()">Diapositiva Anterior</button>
                 <button onclick="nextSlide()">Siguiente Diapositiva</button>
-                <button style="background-color: var(--yellow); color: var(--text-dark);" onclick="endSession()">Finalizar Sesión</button>
+                <button style="background-color: var(--yellow); color: var(--text-dark);" onclick="endSession()">Finalizar Presentación</button>
               </div>
 
               <div id="pdf-viewer-container" style="width:100%; height:500px; margin-top:20px; border:1px solid #ddd; border-radius:8px; overflow:auto;">
-                <canvas id="pdf-canvas" style="display:block;margin:0 auto;"></canvas>
+                <canvas id="pdf-canvas" style="display:none;margin:0 auto;"></canvas>
                 <div id="current-slide-content" style="padding:20px; text-align:center; display:block;">
                   <h3>Diapositiva 1</h3>
                   <p>Carga una presentación PDF/PPT para previsualizar aquí.</p>
@@ -1091,17 +1091,14 @@ button.red:hover { background-color: #c9302c; }
     let questionType = 'multiple-choice';
     let reactionCounts = { love:0, clap:0, question:0, thumbsup:0, thumbsdown:0 };
     let timerInterval = null, timerSeconds = 0;
-    let pdfDoc = null;
+    let pdfDoc = null; // PDF Doc para el Presentador
     let currentFileUrl = null;
     let fileType = null;
-    // RT state holds channel, session ID, presence info, and live spectators
     let rt = { chan: null, sessionId: null, presenceKey: null, liveSpectators: {} };
     let isPresenter = false;
     
-    // **NUEVO** Estado para el PDF del espectador
-    let spectatorPdfDoc = null;
+    let spectatorPdfDoc = null; // PDF Doc para el Espectador
     
-    // Almacenamiento local para archivos subidos por el presentador (se mantiene simulación de STORAGE)
     let uploadedFiles = {
       presentations: [],
       materials: []
@@ -1187,14 +1184,15 @@ button.red:hover { background-color: #c9302c; }
         document.getElementById('total-slides').textContent = totalSlides;
         document.getElementById('current-slide').textContent = currentSlide;
         document.getElementById('current-presentation-title').textContent = currentPresentation || '--';
+        
+        // **Lógica de Previsualización CORREGIDA para Presentador**
         if (fileType === 'pdf' && pdfDoc) {
-             renderPDFPage(currentSlide);
-             document.getElementById('current-slide-content').style.display = 'none';
-             document.getElementById('pdf-canvas').style.display = 'block';
+             renderPDFPage(currentSlide, 'pdf-canvas');
         } else {
-             document.getElementById('current-slide-content').style.display = 'block';
+             // Simulación para PPT/DOCX, etc. y estado inicial
              document.getElementById('pdf-canvas').style.display = 'none';
-             updateSlide(); // Asegura que el contenido genérico se muestre para no-PDF
+             document.getElementById('current-slide-content').style.display = 'block';
+             updateSlide(); 
         }
       }
       if (contentId === 'spectator-management') updateSpectatorList(); 
@@ -1320,7 +1318,7 @@ button.red:hover { background-color: #c9302c; }
         pdfDoc = null;
         currentFileUrl = null;
         fileType = null;
-        spectatorPdfDoc = null; // **NUEVO** Limpiar PDF del espectador
+        spectatorPdfDoc = null; 
 
         // Actualizar UI Presentador
         document.getElementById('current-presentation-title').textContent = '--';
@@ -1358,7 +1356,6 @@ button.red:hover { background-color: #c9302c; }
       try {
         currentSessionCode = sessionCode;
         
-        // **INICIALIZA REALTIME COMO ESPECTADOR**
         await initRealtimeForSession(currentSessionCode, { asSpectator: true, name: spectatorName });
         
         document.getElementById('spectator-presentation-title').textContent = "Sesión en Vivo: " + sessionCode;
@@ -1496,7 +1493,6 @@ button.red:hover { background-color: #c9302c; }
         const fileExt = file.name.split('.').pop().toLowerCase();
         const fileUrl = URL.createObjectURL(file); 
 
-        // Extensión: docx, pptx, ppt se manejan igual que PDF para el flujo de carga.
         const supportedTypes = ['pdf', 'ppt', 'pptx', 'docx'];
         if (!supportedTypes.includes(fileExt)) {
              uploadStatus.innerHTML = 'Formato no soportado para presentación en vivo.';
@@ -1560,30 +1556,32 @@ button.red:hover { background-color: #c9302c; }
       uploadStatus.innerHTML = '<div class="loading-spinner"></div> Cargando presentación para previsualización...';
       
       const isPDF = type === 'pdf' && window.pdfjsLib;
+      const placeholder = document.getElementById('current-slide-content');
+      const canvas = document.getElementById('pdf-canvas');
 
       if (isPDF) {
           const fileData = uploadedFiles.presentations.find(p => p.name === title);
           if (fileData && fileData.file) {
              try {
+                // **CORRECCIÓN:** Asegurar la asignación de pdfDoc para el presentador
                 pdfDoc = await pdfjsLib.getDocument(fileUrl).promise;
                 totalSlides = pdfDoc.numPages;
-                await renderPDFPage(1, 'presenter-pdf-canvas');
-                document.getElementById('pdf-canvas').style.display = 'block';
-                document.getElementById('current-slide-content').style.display = 'none';
+                await renderPDFPage(1, 'pdf-canvas'); 
+                
              } catch (e) {
                 console.error("Error al renderizar PDF:", e);
                 totalSlides = 1;
-                document.getElementById('current-slide-content').innerHTML = `<h3>Error de Carga</h3><p>No se pudo renderizar el PDF. ${e.message}</p>`;
-                document.getElementById('pdf-canvas').style.display = 'none';
-                document.getElementById('current-slide-content').style.display = 'block';
+                placeholder.innerHTML = `<h3>Error de Carga PDF</h3><p>No se pudo renderizar el PDF. ${e.message}</p>`;
+                canvas.style.display = 'none';
+                placeholder.style.display = 'block';
              }
           } 
       } else {
         // Simulación para PPT/DOCX/etc.
         totalSlides = 10; 
-        document.getElementById('current-slide-content').innerHTML = `<h3>Carga Exitosa (Tipo: ${type.toUpperCase()})</h3><p>Vista preliminar simulada. Diapositiva: 1/${totalSlides}.</p>`;
-        document.getElementById('pdf-canvas').style.display = 'none';
-        document.getElementById('current-slide-content').style.display = 'block';
+        placeholder.innerHTML = `<h3>Carga Exitosa (Tipo: ${type.toUpperCase()})</h3><p>Vista preliminar simulada. Diapositiva: 1/${totalSlides}.</p>`;
+        canvas.style.display = 'none';
+        placeholder.style.display = 'block';
       }
 
       document.getElementById('total-slides').textContent = totalSlides;
@@ -1601,7 +1599,7 @@ button.red:hover { background-color: #c9302c; }
     /**
      * Función unificada de renderizado de PDF
      * @param {number} pageNumber - Número de página/diapositiva a renderizar
-     * @param {string} canvasId - ID del elemento canvas (presenter-pdf-canvas o spectator-pdf-canvas)
+     * @param {string} canvasId - ID del elemento canvas (pdf-canvas o spectator-pdf-canvas)
      */
     async function renderPDFPage(pageNumber, canvasId){
       const doc = (canvasId === 'pdf-canvas') ? pdfDoc : spectatorPdfDoc;
@@ -1610,7 +1608,9 @@ button.red:hover { background-color: #c9302c; }
       const page = await doc.getPage(pageNumber);
       const canvas = document.getElementById(canvasId);
       const context = canvas.getContext('2d');
-      const containerWidth = canvas.parentElement.clientWidth - 40; 
+      // Usar el contenedor del canvas para determinar el ancho máximo (Presentador: pdf-viewer-container, Espectador: slide-content-wrapper)
+      const containerId = (canvasId === 'pdf-canvas') ? 'pdf-viewer-container' : 'spectator-pdf-canvas';
+      const containerWidth = document.getElementById(containerId).clientWidth - 40; 
 
       let viewport = page.getViewport({ scale: 1 });
       const scale = containerWidth / viewport.width;
@@ -1625,6 +1625,11 @@ button.red:hover { background-color: #c9302c; }
       // Mostrar el canvas y ocultar el placeholder
       canvas.style.display = 'block';
       const placeholderId = (canvasId === 'pdf-canvas') ? 'current-slide-content' : 'spectator-current-slide-content';
+      
+      // Asegurar que el contenedor del placeholder del espectador se oculte correctamente
+      const nonPdfContent = document.getElementById('spectator-non-pdf-content');
+      if (nonPdfContent) nonPdfContent.style.display = 'none';
+
       document.getElementById(placeholderId).style.display = 'none';
     }
     
@@ -1661,8 +1666,6 @@ button.red:hover { background-color: #c9302c; }
         document.getElementById('current-slide-content').innerHTML = contentHTML;
         document.getElementById('current-slide-content').style.display = 'block';
         document.getElementById('pdf-canvas').style.display = 'none';
-
-        // Para el espectador, la lógica se maneja dentro de RT/BroadcastSlide
     }
 
     function broadcastSlide(){
@@ -1675,8 +1678,8 @@ button.red:hover { background-color: #c9302c; }
                     currentSlide, 
                     totalSlides,
                     presentationTitle: currentPresentation || "Sesión en Vivo",
-                    fileType: fileType, // **NUEVO** Enviar el tipo de archivo
-                    fileUrl: fileType === 'pdf' ? currentFileUrl : null, // **NUEVO** Enviar URL del PDF
+                    fileType: fileType, 
+                    fileUrl: fileType === 'pdf' ? currentFileUrl : null, 
                 } 
             }); 
             console.log("[RT] Diapositiva enviada:", currentSlide); 
@@ -1684,7 +1687,6 @@ button.red:hover { background-color: #c9302c; }
             console.warn('Error RT slide', e); 
         }
       } else {
-          // El presentador no ha iniciado la sesión RT
           document.getElementById('spectator-presentation-title').textContent = currentPresentation || "Sesión en Vivo";
           document.getElementById('spectator-slide-number').textContent = currentSlide;
           document.getElementById('spectator-total-slides').textContent = totalSlides;
@@ -1695,7 +1697,6 @@ button.red:hover { background-color: #c9302c; }
     /************************************************************************
      * PREGUNTAS
      ************************************************************************/
-    // (Funciones de preguntas se mantienen sin cambios)
     function setQuestionType(type, event){
       questionType = type;
       document.querySelectorAll('.question-type-selector button').forEach(b => b.classList.remove('active'));
@@ -1835,7 +1836,7 @@ button.red:hover { background-color: #c9302c; }
           }
         });
         
-        // **NUEVA LÓGICA DE SINCRONIZACIÓN DE DIAPOSITIVAS PARA ESPECTADOR**
+        // **LÓGICA DE SINCRONIZACIÓN DE DIAPOSITIVAS PARA ESPECTADOR**
         chan.on('broadcast', { event: 'slide' }, async (payload) => {
           if (opts.asSpectator) {
             const { currentSlide: slide, totalSlides: total, presentationTitle: title, fileType: type, fileUrl: url } = payload.payload;
@@ -1886,7 +1887,7 @@ button.red:hover { background-color: #c9302c; }
 
         chan.on('broadcast', { event: 'presentation_end' }, (payload) => {
              if (opts.asSpectator) {
-                 spectatorPdfDoc = null; // Limpiar PDF
+                 spectatorPdfDoc = null; 
                  document.getElementById('spectator-presentation-title').textContent = "Presentación Finalizada";
                  document.getElementById('spectator-slide-number').textContent = '--';
                  document.getElementById('spectator-total-slides').textContent = '--';
@@ -1900,7 +1901,6 @@ button.red:hover { background-color: #c9302c; }
              }
         });
         
-        // Presencia handlers (sync, join, leave) se mantienen iguales
         chan.on('presence', { event: 'sync' }, () => {
              const state = chan.presenceState();
              rt.liveSpectators = {};
@@ -1942,7 +1942,6 @@ button.red:hover { background-color: #c9302c; }
                 console.log(`[RT] Conexión establecida. Usuario: ${name} (${userType})`);
                 
                 if (opts.asSpectator) {
-                    // Pedir el estado actual
                     chan.send({ 
                         type:'broadcast', 
                         event:'request_slide_sync', 
@@ -1983,7 +1982,7 @@ button.red:hover { background-color: #c9302c; }
              try { await rt.chan.unsubscribe(); } catch(e){}
         }
         rt = { chan:null, sessionId:null, presenceKey:null, liveSpectators: {} };
-        spectatorPdfDoc = null; // Limpiar PDF del espectador
+        spectatorPdfDoc = null; 
         const connectedSpectatorsEl = document.getElementById('connected-spectators');
         if (connectedSpectatorsEl) connectedSpectatorsEl.textContent = '0 espectadores activos';
         updateSpectatorList();
